@@ -12,15 +12,19 @@ using Ktisis.Overlay;
 
 namespace Ktisis.Interface {
 	public sealed class Input : IDisposable {
+
+		// Keyboard
+
 		// When adding a new keybind:
-		//  - add the logic in Monitor
+		//  - add the logic in KeyboardManager
 		//      (held/release/changed [+ extra conditions] and what it executes )
 		//  - add the key action in Purpose enum
 		//  - add the default key in DefaultKeys
 		//  - add translation, handle format: Keyboard_Action_{Purpose}
 
-		public void Monitor(Framework framework) {
-			if (!Ktisis.IsInGPose || IsChatInputActive() || !Ktisis.Configuration.EnableKeybinds) return; // TODO: when implemented move init/dispose to Gpose enter and leave instead of in Ktisis.cs
+		public void KeyboardManager() {
+			
+			if (IsChatInputActive() || !Ktisis.Configuration.EnableKeybinds) return; // TODO: when implemented move init/dispose to Gpose enter and leave instead of in Ktisis.cs
 			ReadPurposesStates();
 
 			if (!ImGuizmo.IsUsing()) {
@@ -63,6 +67,33 @@ namespace Ktisis.Interface {
 			{Purpose.SwitchToUniversal, new(){VirtualKey.U}},
 		};
 
+
+		// Cursor
+
+		public void CursorManager() {
+			// https://github.com/ocornut/imgui/blob/master/docs/FAQ.md#q-how-can-i-tell-whether-to-dispatch-mousekeyboard-to-dear-imgui-or-my-application
+			//Dalamud.Game.
+
+			//ImGui.GetIO().WantCaptureMouse = true;
+			//ImGui.SetNextFrameWantCaptureMouse(true);
+			//ImGui.GetIO().mou
+			//var zzz = ImGui.GetIO().MouseDown[0];
+			//ImGui.GetIO().AddMouseButtonEvent(0, true);
+
+			//var ddd = ImGui.IsMouseDown(ImGuiMouseButton.Left);
+			//service
+			//var zzz = false;
+			//PluginLog.Debug($"qsdqs {zzz} {ddd}");
+			//PluginLog.Debug($"qsdqs {OverlayWindow.IsCursorBusy()}");
+			//VirtualKey.l
+			//Services.cu
+			//if (!OverlayWindow.IsCursorBusy() && ImGuiNET.get) OverlayWindow.SetGizmoOwner(null);
+			//ImGui.GetIO().WantCaptureMouse = false;
+			//ImGui.SetNextFrameWantCaptureMouse(false);
+
+		}
+
+
 		// Helpers
 		public static bool IsHeld(Purpose purpose) {
 			if (Instance.PrevriousKeyStates.TryGetValue(purpose, out bool shiftPressed))
@@ -86,6 +117,11 @@ namespace Ktisis.Interface {
 		}
 		public void Dispose() {
 			Services.Framework.Update -= Monitor;
+		}
+		public void Monitor(Framework framework) {
+			if (!Ktisis.IsInGPose) return;
+			KeyboardManager();
+			CursorManager();
 		}
 
 		// Below are the methods and variables needed for Monitor to handle inputs
