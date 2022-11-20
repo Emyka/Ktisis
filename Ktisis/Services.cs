@@ -7,6 +7,7 @@ using Dalamud.Game.Command;
 using Dalamud.Game.ClientState;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Game.ClientState.Objects;
+using Dalamud.Game.Network;
 
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 
@@ -17,6 +18,7 @@ namespace Ktisis {
 		[PluginService] internal static DataManager DataManager { get; private set; } = null!;
 		[PluginService] internal static ClientState ClientState { get; private set; } = null!;
 		[PluginService] internal static ObjectTable ObjectTable { get; private set; } = null!;
+		[PluginService] internal static GameNetwork GameNetwork { get; private set; } = null!;
 		[PluginService] internal static SigScanner SigScanner { get; private set; } = null!;
 		[PluginService] internal static Framework Framework { get; private set; } = null!;
 		[PluginService] internal static KeyState KeyState { get; private set; } = null!;
