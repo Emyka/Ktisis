@@ -58,6 +58,8 @@ namespace Ktisis.Interface.Windows {
 						DrawLanguageTab(cfg);
 					if (ImGui.BeginTabItem("Data"))
 						DrawDataTab(cfg);
+					if (Services.PluginInterface.IsDevMenuOpen && ImGui.BeginTabItem("Debug"))
+						DrawDebugTab(cfg);
 
 					ImGui.EndTabBar();
 				}
@@ -427,6 +429,12 @@ namespace Ktisis.Interface.Windows {
 				cfg.CustomBoneOffset = new();
 
 			ImGui.Spacing();
+		}
+
+		private static void DrawDebugTab(Configuration cfg) {
+
+
+			ImGui.EndTabItem();
 		}
 	}
 }
