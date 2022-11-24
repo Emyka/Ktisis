@@ -432,6 +432,15 @@ namespace Ktisis.Interface.Windows {
 		}
 
 		private static void DrawDebugTab(Configuration cfg) {
+			ImGui.Spacing();
+
+			GuiHelpers.Icon(FontAwesomeIcon.ExclamationTriangle);
+			ImGui.SameLine();
+			ImGui.TextWrapped("Debug display can show character names despite \"" + Locale.GetString("Hide_char_name") + "\" being checked.");
+
+			var debugActorListDebugTooltip = cfg.DebugActorListTooltipId;
+			if (ImGui.Checkbox(Locale.GetString("Display tooltip with id on Actor List items"), ref debugActorListDebugTooltip))
+				cfg.DebugActorListTooltipId = debugActorListDebugTooltip;
 
 
 			ImGui.EndTabItem();

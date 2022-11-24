@@ -116,6 +116,11 @@ namespace Ktisis {
 		public Dictionary<string, GlamourDresser.GlamourPlate[]?>? GlamourPlateData { get; set; } = null;
 		public Dictionary<string, Dictionary<string, Vector3>> CustomBoneOffset { get; set; } = new();
 
+		// Debug configs
+
+		public bool DebugActorListTooltipId { get; set; } = false;
+
+
 		// Validate for changes in config versions.
 
 		public void Validate() {

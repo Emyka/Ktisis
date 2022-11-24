@@ -42,6 +42,7 @@ namespace Ktisis.Interface.Components {
 						Services.Targets->GPoseTarget = (GameObject*)pointer; // TODO: check if this is safe for expected actors, and unexpected actors
 					if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
 						toRemove = pointer;
+					DebugActorTooltip((IntPtr)pointer);
 				}
 				if (toRemove != null) SavedObjects.Remove((long)toRemove);
 
@@ -91,6 +92,7 @@ namespace Ktisis.Interface.Components {
 				(t, a) => { // draw Line
 					bool selected = ImGui.Selectable($"{((Actor*)t)->GetNameOrId()}##{t}", a);
 					bool focus = ImGui.IsItemFocused();
+					DebugActorTooltip((IntPtr)t);
 					return (selected, focus);
 				},
 				(t) => SavedObjects.Add(t), // on Select
@@ -101,6 +103,20 @@ namespace Ktisis.Interface.Components {
 				"##actor_search");
 		}
 
+		private static unsafe void DebugActorTooltip(IntPtr actorPointer) {
+			if (Ktisis.Configuration.DebugActorListTooltipId) {
+				var actor = (Actor*)actorPointer;
+				var gameObject = Services.ObjectTable.CreateObjectReference(actorPointer);
+				if (gameObject != null) {
+					GuiHelpers.Tooltip($" -- Actor info -- \n" +
+						$"Name: {gameObject.Name.TextValue}\n" +
+						$"Gpose ID: {actor->ObjectID}\n" +
+						$"Object Kind: ({gameObject.ObjectKind}) Sub: {gameObject.SubKind}\n" +
+						$"GameObject ID: {gameObject.ObjectId}{(gameObject.ObjectId == Dalamud.Game.ClientState.Objects.Types.GameObject.InvalidGameObjectId ? " (Non-Network Object)" : "")}\n" +
+						$"Owner: {gameObject.OwnerId}{(gameObject.OwnerId == Dalamud.Game.ClientState.Objects.Types.GameObject.InvalidGameObjectId ? " (Non-Network Object)" : "")}");
+				}
+			}
+		}
 		public static unsafe bool IsValidActor(long target) {
 			var gameObject = (GameObject*)target;
 			if (gameObject == null) return false;
