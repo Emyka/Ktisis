@@ -44,7 +44,6 @@ namespace Ktisis {
 
 			Input.Init();
 			ActorStateWatcher.Init();
-			Services.GameNetwork.NetworkMessage += NetworkPacket;
 
 			// Register command
 
@@ -65,7 +64,6 @@ namespace Ktisis {
 			Services.CommandManager.RemoveHandler(CommandName);
 			Services.PluginInterface.SavePluginConfig(Configuration);
 
-			Services.GameNetwork.NetworkMessage -= NetworkPacket;
 			Interop.Hooks.ActorHooks.Dispose();
 			Interop.Hooks.ControlHooks.Dispose();
 			Interop.Hooks.EventsHooks.Dispose();
@@ -83,21 +81,6 @@ namespace Ktisis {
 
 		private void OnCommand(string command, string arguments) {
 			Workspace.Show();
-		}
-
-		public static unsafe void NetworkPacket(IntPtr dataPtr, ushort opCode, uint sourceActorId, uint targetActorId, NetworkMessageDirection direction) {
-
-			if (direction == NetworkMessageDirection.ZoneUp) {
-				PluginLog.Verbose("Network Packet Intercepted ------------------");
-				PluginLog.Verbose($"DataPointer: {dataPtr:X8}");
-				PluginLog.Verbose($"opCode: 0x{opCode:X4}");
-				PluginLog.Verbose($"sourceActorId: {sourceActorId}");
-				PluginLog.Verbose($"targetActorId: {targetActorId}");
-				PluginLog.Verbose($"Direction: {direction}");
-				PluginLog.Verbose("End -----------------------------------------");
-				// Check against known opCode list at
-				// https://github.com/karashiiro/FFXIVOpcodes/blob/master/FFXIVOpcodes/Ipcs.cs
-			}
 		}
 	}
 }

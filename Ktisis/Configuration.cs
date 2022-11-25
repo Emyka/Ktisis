@@ -119,6 +119,7 @@ namespace Ktisis {
 		// Debug configs
 
 		public bool DebugActorListTooltipId { get; set; } = false;
+		public bool DebugNetworkPacketLog { get; set; } = false;
 
 
 		// Validate for changes in config versions.

@@ -1,3 +1,4 @@
+using Ktisis.Interop;
 using Ktisis.Structs.Actor.State;
 
 namespace Ktisis.Events {
@@ -17,9 +18,13 @@ namespace Ktisis.Events {
 
 		// Converniency functions
 		private static void EnterGposeOrLoadInGpose() {
+			if(Ktisis.Configuration.DebugNetworkPacketLog)
+				Services.GameNetwork.NetworkMessage += NetworkPacket.Log;
 
 		}
 		private static void LeaveGposeOrUnloadInGpose() {
+			if (Ktisis.Configuration.DebugNetworkPacketLog)
+				Services.GameNetwork.NetworkMessage -= NetworkPacket.Log;
 
 		}
 

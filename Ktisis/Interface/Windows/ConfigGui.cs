@@ -17,6 +17,7 @@ using Ktisis.Overlay;
 using Ktisis.Structs.Bones;
 using Ktisis.Structs.Actor.Equip;
 using Ktisis.Structs.Actor.Equip.SetSources;
+using Ktisis.Interop;
 
 namespace Ktisis.Interface.Windows {
 	internal static class ConfigGui {
@@ -442,6 +443,14 @@ namespace Ktisis.Interface.Windows {
 			if (ImGui.Checkbox(Locale.GetString("Display tooltip with id on Actor List items"), ref debugActorListDebugTooltip))
 				cfg.DebugActorListTooltipId = debugActorListDebugTooltip;
 
+			var debugNetworkLog = cfg.DebugNetworkPacketLog;
+			if (ImGui.Checkbox(Locale.GetString("Log Network upstream packets"), ref debugNetworkLog)) {
+				cfg.DebugNetworkPacketLog = debugNetworkLog;
+				if (cfg.DebugNetworkPacketLog && Ktisis.IsInGPose)
+					Services.GameNetwork.NetworkMessage += NetworkPacket.Log;
+				else if (!cfg.DebugNetworkPacketLog && Ktisis.IsInGPose)
+					Services.GameNetwork.NetworkMessage -= NetworkPacket.Log;
+			}
 
 			ImGui.EndTabItem();
 		}
