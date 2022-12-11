@@ -15,6 +15,8 @@ namespace Ktisis.Data.Files {
 
 		public PoseContainer? Bones { get; set; }
 
+		public string? Base64Image { get; set; }
+
 		// Legacy conversion
 
 		public void ConvertLegacyBones() {
