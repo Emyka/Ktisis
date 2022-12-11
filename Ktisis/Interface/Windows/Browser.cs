@@ -15,8 +15,6 @@ using Ktisis.Util;
 namespace Ktisis.Interface.Windows.Browser {
 	internal class BrowserWindow {
 		private static bool Visible = true;
-
-		private static List<string> Paths = new();
 		private static List<BrowserPoseFile> BrowserPoseFiles = new();
 		private static float ThumbSize = 15;
 		private static Vector2 ThumbSize2D = new(ImGui.GetFontSize() * ThumbSize);
@@ -75,18 +73,18 @@ namespace Ktisis.Interface.Windows.Browser {
 				KtisisGui.FileDialogManager.OpenFolderDialog(
 					"Add pose library path",
 					(selected, path) => {
-						Paths.Add(path);
+						Ktisis.Configuration.BrowserLibraryPaths.Add(path);
 						Sync();
 					},
-					Paths.Any() ? Paths.Last() : null
+					Ktisis.Configuration.BrowserLibraryPaths.Any() ? Ktisis.Configuration.BrowserLibraryPaths.Last() : null
 					);
 			}
-			var libList = string.Join("\n", Paths);
-			GuiHelpers.Tooltip($"{Paths.Count} saved pose librarie(s):\n{libList}");
+			var libList = string.Join("\n", Ktisis.Configuration.BrowserLibraryPaths);
+			GuiHelpers.Tooltip($"{Ktisis.Configuration.BrowserLibraryPaths.Count} saved pose librarie(s):\n{libList}");
 
 			ImGui.SameLine();
-			if (GuiHelpers.IconButtonHoldConfirm(Dalamud.Interface.FontAwesomeIcon.FolderMinus, $"Delete all {Paths.Count} saved pose librarie(s):\n{libList}")) {
-				Paths.Clear();
+			if (GuiHelpers.IconButtonHoldConfirm(Dalamud.Interface.FontAwesomeIcon.FolderMinus, $"Delete all {Ktisis.Configuration.BrowserLibraryPaths.Count} saved pose librarie(s):\n{libList}")) {
+				Ktisis.Configuration.BrowserLibraryPaths.Clear();
 				BrowserPoseFiles.Clear();
 			}
 
@@ -95,14 +93,14 @@ namespace Ktisis.Interface.Windows.Browser {
 
 
 		private static void Sync() {
-			if (!Paths.Any(p => Directory.Exists(p))) return;
+			if (!Ktisis.Configuration.BrowserLibraryPaths.Any(p => Directory.Exists(p))) return;
 
 			BrowserPoseFiles.Clear();
 
 
 			Regex poseExts = new(@"^\.(pose|cmp)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 			List<FileInfo> tempPosesFound = new();
-			foreach(var path in Paths) {
+			foreach(var path in Ktisis.Configuration.BrowserLibraryPaths) {
 				var pathItems = from d in new DirectoryInfo(path)
 						.EnumerateFiles("*", SearchOption.AllDirectories)
 						.Where(file => poseExts.IsMatch(file.Extension))

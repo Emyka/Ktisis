@@ -143,6 +143,7 @@ namespace Ktisis
 		// Data memory
 		public Dictionary<string, GlamourDresser.GlamourPlate[]?>? GlamourPlateData { get; set; } = null;
 		public Dictionary<string, Dictionary<string, Vector3>> CustomBoneOffset { get; set; } = new();
+		public List<string> BrowserLibraryPaths { get; set; } = new();
 
 		// Validate for changes in config versions.
 
