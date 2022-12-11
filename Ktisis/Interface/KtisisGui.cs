@@ -7,6 +7,7 @@ using Ktisis.Interface.Windows;
 using Ktisis.Interface.Windows.ActorEdit;
 using Ktisis.Interface.Windows.Toolbar;
 using Ktisis.Interface.Windows.Workspace;
+using Ktisis.Interface.Windows.Browser;
 
 namespace Ktisis.Interface {
 	public static class KtisisGui {
@@ -34,6 +35,7 @@ namespace Ktisis.Interface {
 			EditActor.Draw();
 			References.Draw();
 			ToolbarWindow.Draw();
+			BrowserWindow.Draw();
 		}
 	}
 }
