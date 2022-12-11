@@ -371,31 +371,7 @@ namespace Ktisis.Interface.Windows.Workspace
 					(success, path) => {
 						if (!success) return;
 
-						var content = File.ReadAllText(path[0]);
-						var pose = JsonParser.Deserialize<PoseFile>(content);
-						if (pose == null) return;
-
-						if (actor->Model == null) return;
-
-						var skeleton = actor->Model->Skeleton;
-						if (skeleton == null) return;
-
-						pose.ConvertLegacyBones();
-
-						if (pose.Bones != null) {
-							for (var p = 0; p < skeleton->PartialSkeletonCount; p++) {
-								switch (p) {
-									case 0:
-										if (!body) continue;
-										break;
-									case 1:
-										if (!face) continue;
-										break;
-								}
-
-								pose.Bones.ApplyToPartial(skeleton, p, trans);
-							}
-						}
+						ImportPath(path[0], actor, body, face, trans);
 					},
 					1,
 					null
@@ -435,6 +411,34 @@ namespace Ktisis.Interface.Windows.Workspace
 			}
 
 			ImGui.Spacing();
+		}
+
+		public unsafe static void ImportPath(string path, Actor* actor, bool body, bool face, PoseTransforms trans) {
+			var content = File.ReadAllText(path);
+			var pose = JsonParser.Deserialize<PoseFile>(content);
+			if (pose == null) return;
+
+			if (actor->Model == null) return;
+
+			var skeleton = actor->Model->Skeleton;
+			if (skeleton == null) return;
+
+			pose.ConvertLegacyBones();
+
+			if (pose.Bones != null) {
+				for (var p = 0; p < skeleton->PartialSkeletonCount; p++) {
+					switch (p) {
+						case 0:
+							if (!body) continue;
+							break;
+						case 1:
+							if (!face) continue;
+							break;
+					}
+
+					pose.Bones.ApplyToPartial(skeleton, p, trans);
+				}
+			}
 		}
 
 		public unsafe static void ImportExportChara(Actor* actor) {
