@@ -15,7 +15,7 @@ using Ktisis.Interop.Hooks;
 using Ktisis.Structs.Bones;
 using Ktisis.Structs.Input;
 using Ktisis.Interface.Components;
-using Ktisis.Interface.Windows.Browser;
+using Ktisis.Interface.Windows.PoseBrowser;
 
 namespace Ktisis.Interface {
 	public static class Input {

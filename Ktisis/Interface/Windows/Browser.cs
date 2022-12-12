@@ -14,7 +14,7 @@ using Ktisis.Data.Serialization;
 using Ktisis.Structs.Poses;
 using Ktisis.Util;
 
-namespace Ktisis.Interface.Windows.Browser {
+namespace Ktisis.Interface.Windows.PoseBrowser {
 	internal class BrowserWindow {
 		private static bool Visible = true;
 		private static List<BrowserPoseFile> BrowserPoseFiles = new();
@@ -33,7 +33,7 @@ namespace Ktisis.Interface.Windows.Browser {
 			if (!Visible || !Ktisis.IsInGPose)
 				return;
 
-			if (!ImGui.Begin("Browser", ref Visible)) {
+			if (!ImGui.Begin("Pose Browser", ref Visible)) {
 				ImGui.End();
 				return;
 			}

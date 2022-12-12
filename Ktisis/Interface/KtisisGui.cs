@@ -7,7 +7,7 @@ using Ktisis.Interface.Windows;
 using Ktisis.Interface.Windows.ActorEdit;
 using Ktisis.Interface.Windows.Toolbar;
 using Ktisis.Interface.Windows.Workspace;
-using Ktisis.Interface.Windows.Browser;
+using Ktisis.Interface.Windows.PoseBrowser;
 
 namespace Ktisis.Interface {
 	public static class KtisisGui {
