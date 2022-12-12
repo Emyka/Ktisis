@@ -81,8 +81,9 @@ namespace Ktisis.Interface.Windows.Browser {
 
 			ImGui.SameLine();
 			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 10);
-			if (ImGui.SliderFloat("Thumb size", ref ThumbSize, 2, 100))
+			if (ImGui.SliderFloat("##Browser##ThumbSize", ref ThumbSize, 2, 100))
 				ThumbSize2D = new(ImGui.GetFontSize() * ThumbSize);
+			GuiHelpers.Tooltip("Thumb size");
 			ImGui.SameLine();
 
 			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 10);
