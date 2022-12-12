@@ -20,6 +20,8 @@ namespace Ktisis.Interface.Windows.Browser {
 		private static float ThumbSize = 15;
 		private static Vector2 ThumbSize2D = new(ImGui.GetFontSize() * ThumbSize);
 		private static BrowserPoseFile? FileInFocus = null;
+		private static BrowserPoseFile? FileInPreview = null;
+		private static bool IsHolding = false;
 
 		// Toggle visibility
 		public static void Toggle() => Visible = !Visible;
@@ -54,6 +56,11 @@ namespace Ktisis.Interface.Windows.Browser {
 			}
 			if (!anyHovered)
 				FileInFocus = null;
+
+			if (FileInFocus != FileInPreview)
+				RestoreTempPose();
+			if (IsHolding && FileInFocus != null && FileInPreview == null)
+				PressPreview();
 			ImGui.EndChildFrame();
 
 			ImGui.End();
@@ -145,13 +152,22 @@ namespace Ktisis.Interface.Windows.Browser {
 			if (actor->Model == null) return false;
 			_TempPose.Store(actor->Model->Skeleton);
 
+			IsHolding = true;
+			FileInPreview = FileInFocus;
 			var trans = Ktisis.Configuration.PoseTransforms;
 			Workspace.Workspace.ImportPath(FileInFocus.Path, actor, true, true, trans);
 			return true;
 		}
 
-		public unsafe static bool ReleasePreview() {
+		public static bool ReleasePreview() {
+			IsHolding = false;
+			FileInPreview = null;
 			if (!Visible || FileInFocus == null) return false;
+
+			return RestoreTempPose();
+		}
+		public unsafe static bool RestoreTempPose() {
+			FileInPreview = null;
 
 			var actor = Ktisis.Target;
 			if (actor->Model == null) return false;
