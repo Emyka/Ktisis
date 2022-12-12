@@ -56,9 +56,34 @@ namespace Ktisis.Interface.Windows.Browser {
 					FileInFocus = file;
 					anyHovered |= true;
 				}
+
+				var fileExt = Path.GetExtension(file.Path);
+				string fileType;
+				if (fileExt == ".pose")
+					fileType = "Anamnesis pose";
+				else if (fileExt == ".cmp")
+					fileType = "Concept Matrix pose";
+				else
+					fileType = "Unknown file type";
+
+				if (ImGui.BeginPopupContextItem($"{file.Path}", ImGuiPopupFlags.MouseButtonRight | ImGuiPopupFlags.AnyPopupId)) {
+					ImGui.Text(file.Name);
+					ImGui.Separator();
+					ImGui.Text(fileType);
+					ImGui.Text($"Path:\n{file.Path}");
+
+					ImGui.TextDisabled($"Apply to target");
+					ImGui.TextDisabled($"Apply body to target");
+					ImGui.TextDisabled($"Apply expression to target");
+
+					ImGui.EndPopup();
+				}
+
 				// TODO: display discreet name in the image instead of tooltip
 				GuiHelpers.Tooltip($"{file.Name}\n{Path.GetExtension(file.Path)}");
 				ImGui.SameLine();
+
+				// Hacky line wrap
 				if (ImGui.GetContentRegionAvail().X < ThumbSize2D.X * 0.66f)
 					ImGui.Text("");
 			}
