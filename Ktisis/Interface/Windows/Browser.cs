@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 using ImGuiNET;
 using ImGuiScene;
@@ -132,7 +133,7 @@ namespace Ktisis.Interface.Windows.Browser {
 					var pose = JsonParser.Deserialize<PoseFile>(content);
 					if (pose?.Base64Image != null) {
 						var bytes = Convert.FromBase64String(pose.Base64Image);
-						entry.Images.Add(Ktisis.UiBuilder.LoadImage(bytes));
+						Ktisis.UiBuilder.LoadImageAsync(bytes).ContinueWith(t => entry.Images.Add(t.Result));
 					}
 				}
 
@@ -191,6 +192,7 @@ namespace Ktisis.Interface.Windows.Browser {
 		public string Path { get; set; }
 		public string Name { get; set; }
 		public List<TextureWrap> Images { get; set; } = new();
+		public Task<TextureWrap>? ImageTask;
 
 		public BrowserPoseFile(string path, string name) {
 			Path = path;
