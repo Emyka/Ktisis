@@ -116,7 +116,7 @@ namespace Ktisis.Interface.Windows.Browser {
 				// TODO: verify if the file is valid
 
 
-				BrowserPoseFile entry = new(item.FullName, item.Name);
+				BrowserPoseFile entry = new(item.FullName, Path.GetFileNameWithoutExtension(item.Name));
 
 				// Add embedded image if exists
 				if (item.Extension == ".pose" && File.ReadLines(item.FullName).Any(line => line.Contains("\"Base64Image\""))) {
