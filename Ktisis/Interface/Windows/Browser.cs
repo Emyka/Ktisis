@@ -52,6 +52,8 @@ namespace Ktisis.Interface.Windows.Browser {
 					FileInFocus = file;
 					anyHovered |= true;
 				}
+				// TODO: display discreet name in the image instead of tooltip
+				GuiHelpers.Tooltip($"{file.Name}\n{Path.GetExtension(file.Path)}");
 				ImGui.SameLine();
 				if (ImGui.GetContentRegionAvail().X < ThumbSize2D.X * 0.66f)
 					ImGui.Text("");
