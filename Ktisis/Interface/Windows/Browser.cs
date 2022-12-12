@@ -10,6 +10,7 @@ using ImGuiScene;
 
 using Ktisis.Data.Files;
 using Ktisis.Data.Serialization;
+using Ktisis.Structs.Poses;
 using Ktisis.Util;
 
 namespace Ktisis.Interface.Windows.Browser {
@@ -134,6 +135,29 @@ namespace Ktisis.Interface.Windows.Browser {
 				BrowserPoseFiles.Add(entry);
 			}
 
+		}
+
+		private static PoseContainer _TempPose = new();
+		public unsafe static bool PressPreview() {
+			if (!Visible || FileInFocus == null) return false;
+
+			var actor = Ktisis.Target;
+			if (actor->Model == null) return false;
+			_TempPose.Store(actor->Model->Skeleton);
+
+			var trans = Ktisis.Configuration.PoseTransforms;
+			Workspace.Workspace.ImportPath(FileInFocus.Path, actor, true, true, trans);
+			return true;
+		}
+
+		public unsafe static bool ReleasePreview() {
+			if (!Visible || FileInFocus == null) return false;
+
+			var actor = Ktisis.Target;
+			if (actor->Model == null) return false;
+
+			_TempPose.Apply(actor->Model->Skeleton);
+			return true;
 		}
 
 		private static Vector2 ScaleImage(TextureWrap image) {

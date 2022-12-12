@@ -15,12 +15,15 @@ using Ktisis.Interop.Hooks;
 using Ktisis.Structs.Bones;
 using Ktisis.Structs.Input;
 using Ktisis.Interface.Components;
+using Ktisis.Interface.Windows.Browser;
 
 namespace Ktisis.Interface {
 	public static class Input {
 		// When adding a new keybind:
-		//  - add the logic in Monitor
-		//      (held/release/changed [+ extra conditions] and what it executes )
+		//  - add the logic in the switch of:
+		//      - OnKeyPressed() if on key press
+		//      - OnKeyReleased() if on key release
+		//      - HandleHeldPurposes() if on key state change
 		//  - add the key action in Purpose enum
 		//  - add the default key in DefaultKeys
 		//  - add translation, handle format: Keyboard_Action_{Purpose}
@@ -33,6 +36,7 @@ namespace Ktisis.Interface {
 				}
 			}
 
+			// Handle Purposes triggered in both Pressed and Released
 			var purpose = GetPurposeFromInput(key);
 			switch (purpose) {
 				case Purpose.HoldAllCategoryVisibilityOverload:
@@ -58,7 +62,7 @@ namespace Ktisis.Interface {
 				if (IsPurposeUsed(p, input.VirtualKey))
 					c.ToggleVisibilityOverload();
 
-			// Purposes
+			// Handle Purposes triggered in Pressed only
 			var purpose = GetPurposeFromInput(input.VirtualKey);
 			if (purpose != null) {
 				var res = true;
@@ -104,6 +108,10 @@ namespace Ktisis.Interface {
 						else
 							res = false;
 						break;
+					case Purpose.BrowserHoldPreview:
+						if(!BrowserWindow.PressPreview())
+							res = false;
+						break;
 				}
 
 				return res;
@@ -117,6 +125,18 @@ namespace Ktisis.Interface {
 				return;
 
 			HandleHeldPurposes(key);
+
+
+			// Handle Purposes triggered in Released only
+			var purpose = GetPurposeFromInput(key);
+			if (purpose != null) {
+				switch (purpose) {
+					case Purpose.BrowserHoldPreview:
+						BrowserWindow.ReleasePreview();
+					break;
+				}
+			}
+
 		}
 
 		internal static Purpose? GetPurposeFromInput(VirtualKey input) {
@@ -156,6 +176,7 @@ namespace Ktisis.Interface {
 			DeselectGizmo,
 			BoneSelectionUp,
 			BoneSelectionDown,
+			BrowserHoldPreview,
 		}
 
 		public static readonly Dictionary<Purpose, List<VirtualKey>> DefaultKeys = new(){
@@ -172,6 +193,7 @@ namespace Ktisis.Interface {
 			{Purpose.DeselectGizmo, new(){VirtualKey.ESCAPE}},
 			{Purpose.BoneSelectionUp, new(){VirtualKey.UP}},
 			{Purpose.BoneSelectionDown, new(){VirtualKey.DOWN}},
+			{Purpose.BrowserHoldPreview, new(){VirtualKey.NO_KEY}},
 		};
 
 		// Init & dispose
