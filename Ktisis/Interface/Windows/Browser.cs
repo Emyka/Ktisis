@@ -23,6 +23,7 @@ namespace Ktisis.Interface.Windows.Browser {
 		private static BrowserPoseFile? FileInFocus = null;
 		private static BrowserPoseFile? FileInPreview = null;
 		private static bool IsHolding = false;
+		private static string Search = "";
 
 		// Toggle visibility
 		public static void Toggle() => Visible = !Visible;
@@ -43,7 +44,10 @@ namespace Ktisis.Interface.Windows.Browser {
 
 			ImGui.BeginChildFrame(76,ImGui.GetContentRegionAvail());
 			bool anyHovered = false;
-			foreach (var file in BrowserPoseFiles){
+			var files = BrowserPoseFiles;
+			if (!string.IsNullOrWhiteSpace(Search)) files = files.Where(f => f.Path.Contains(Search, StringComparison.OrdinalIgnoreCase)).ToList();
+
+			foreach (var file in files) {
 				if (!file.Images.Any()) continue; // TODO: Handle files without images
 
 				var image = file.Images.First();
@@ -79,6 +83,10 @@ namespace Ktisis.Interface.Windows.Browser {
 			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 10);
 			if (ImGui.SliderFloat("Thumb size", ref ThumbSize, 2, 100))
 				ThumbSize2D = new(ImGui.GetFontSize() * ThumbSize);
+			ImGui.SameLine();
+
+			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 10);
+			ImGui.InputTextWithHint("##Browser##Search","Search", ref Search, 100, ImGuiInputTextFlags.AutoSelectAll);
 
 			ImGui.SameLine();
 			if (GuiHelpers.IconButton(Dalamud.Interface.FontAwesomeIcon.FolderPlus)) {
