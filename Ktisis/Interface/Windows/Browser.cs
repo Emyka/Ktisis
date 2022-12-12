@@ -126,6 +126,8 @@ namespace Ktisis.Interface.Windows.Browser {
 
 			// TODO: Once CMP files are supported, change ^\.(pose)$ to ^\.(pose|cmp)$
 			Regex poseExts = new(@"^\.(pose)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+			Regex imgExts = new(@"^\.(jpg|jpeg|png|gif)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
 			List<FileInfo> tempPosesFound = new();
 			foreach(var path in Ktisis.Configuration.BrowserLibraryPaths) {
 				var pathItems = from d in new DirectoryInfo(path)
@@ -153,10 +155,19 @@ namespace Ktisis.Interface.Windows.Browser {
 						var bytes = Convert.FromBase64String(pose.Base64Image);
 						Ktisis.UiBuilder.LoadImageAsync(bytes).ContinueWith(t => entry.Images.Add(t.Result));
 					}
+				} else {
+
+					// Try finding related images close to the pose file
+					// TODO: improve algo for better relevance
+					var dir = Path.GetDirectoryName(item.FullName);
+					if (dir != null) {
+						var imageFile = new DirectoryInfo(dir)
+							.EnumerateFiles("*", SearchOption.TopDirectoryOnly)
+							.FirstOrDefault(file => imgExts.IsMatch(file.Extension));
+						if( imageFile != null)
+							Ktisis.UiBuilder.LoadImageAsync(imageFile.FullName).ContinueWith(t=> entry.Images.Add(t.Result));
+					}
 				}
-
-
-				// TODO: Add find potential images coupled with the pose file
 
 				BrowserPoseFiles.Add(entry);
 			}
