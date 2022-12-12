@@ -124,7 +124,8 @@ namespace Ktisis.Interface.Windows.Browser {
 			BrowserPoseFiles.Clear();
 
 
-			Regex poseExts = new(@"^\.(pose|cmp)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+			// TODO: Once CMP files are supported, change ^\.(pose)$ to ^\.(pose|cmp)$
+			Regex poseExts = new(@"^\.(pose)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 			List<FileInfo> tempPosesFound = new();
 			foreach(var path in Ktisis.Configuration.BrowserLibraryPaths) {
 				var pathItems = from d in new DirectoryInfo(path)
