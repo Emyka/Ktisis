@@ -43,7 +43,8 @@ namespace Ktisis.Interface.Windows.Browser {
 
 			ImGui.BeginChildFrame(76,ImGui.GetContentRegionAvail());
 			bool anyHovered = false;
-			foreach(var file in BrowserPoseFiles.Where(f => f.Images.Any())){
+			foreach (var file in BrowserPoseFiles){
+				if (!file.Images.Any()) continue; // TODO: Handle files without images
 
 				var image = file.Images.First();
 				ImGui.Image(image.ImGuiHandle, ScaleImage(image));
