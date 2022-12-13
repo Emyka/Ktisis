@@ -410,6 +410,11 @@ namespace Ktisis.Interface.Windows.Workspace
 				);
 			}
 
+			ImGui.SameLine();
+
+			if (GuiHelpers.IconButton(FontAwesomeIcon.FolderOpen))
+				PoseBrowser.BrowserWindow.Toggle();
+
 			ImGui.Spacing();
 		}
 

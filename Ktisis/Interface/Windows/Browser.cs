@@ -19,7 +19,7 @@ using Ktisis.Util;
 
 namespace Ktisis.Interface.Windows.PoseBrowser {
 	internal class BrowserWindow {
-		private static bool Visible = true;
+		private static bool Visible = false;
 		private static List<BrowserPoseFile> BrowserPoseFiles = new();
 		private static float ThumbSize = 15;
 		private static Vector2 ThumbSize2D = new(ImGui.GetFontSize() * ThumbSize);
