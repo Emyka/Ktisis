@@ -27,6 +27,9 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		private static BrowserPoseFile? FileInPreview = null;
 		private static bool IsHolding = false;
 		private static string Search = "";
+		// TODO: Once CMP files are supported, change ^\.(pose)$ to ^\.(pose|cmp)$
+		private static Regex PosesExts = new(@"^\.(pose)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+		private static Regex ImagesExts = new(@"^\.(jpg|jpeg|png|gif)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 		// Toggle visibility
 		public static void Toggle() {
@@ -180,15 +183,12 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			ClearImageCache();
 
 
-			// TODO: Once CMP files are supported, change ^\.(pose)$ to ^\.(pose|cmp)$
-			Regex poseExts = new(@"^\.(pose)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-			Regex imgExts = new(@"^\.(jpg|jpeg|png|gif)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 			List<FileInfo> tempPosesFound = new();
 			foreach(var path in Ktisis.Configuration.BrowserLibraryPaths) {
 				var pathItems = from d in new DirectoryInfo(path)
 						.EnumerateFiles("*", SearchOption.AllDirectories)
-						.Where(file => poseExts.IsMatch(file.Extension))
+						.Where(file => PosesExts.IsMatch(file.Extension))
 					select d;
 				tempPosesFound = tempPosesFound.Concat(pathItems).ToList();
 			}
@@ -219,7 +219,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 					if (dir != null) {
 						var imageFile = new DirectoryInfo(dir)
 							.EnumerateFiles("*", SearchOption.TopDirectoryOnly)
-							.FirstOrDefault(file => imgExts.IsMatch(file.Extension));
+							.FirstOrDefault(file => ImagesExts.IsMatch(file.Extension));
 						if( imageFile != null)
 							Ktisis.UiBuilder.LoadImageAsync(imageFile.FullName).ContinueWith(t=> entry.Images.Add(t.Result));
 					}
