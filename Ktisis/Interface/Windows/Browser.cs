@@ -27,6 +27,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		private static BrowserPoseFile? FileInPreview = null;
 		private static bool IsHolding = false;
 		private static string Search = "";
+		private static bool ShowImages = true;
 		private static PoseContainer _TempPose = new();
 
 		// TODO: Once CMP files are supported, change ^\.(pose)$ to ^\.(pose|cmp)$
@@ -83,7 +84,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				if (file.ImageTask != null && file.ImageTask.IsCompleted)
 					file.ImageTask.Dispose();
 
-				if (!file.Images.Any()) continue; // TODO: Handle files without images
+				if (ShowImages && !file.Images.Any()) continue;
 
 				var image = file.Images.First();
 				ImGui.Image(image.ImGuiHandle, ScaleImage(image));
@@ -177,6 +178,9 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				Ktisis.Configuration.BrowserLibraryPaths.Clear();
 				ClearImageCache();
 			}
+			ImGui.SameLine();
+
+			ImGui.Checkbox($"Images Only##PoseBrowser", ref ShowImages);
 
 
 		}
