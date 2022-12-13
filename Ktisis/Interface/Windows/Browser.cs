@@ -94,7 +94,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 				if ((file.ImageTask == null || file.ImageTask.IsCompleted) && file.Images.Any()) {
 
-				var image = file.Images.First();
+					var image = file.Images.First();
 
 					ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.FrameBg]);
 					ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(borderSize));
