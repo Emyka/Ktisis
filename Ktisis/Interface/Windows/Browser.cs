@@ -27,6 +27,8 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		private static BrowserPoseFile? FileInPreview = null;
 		private static bool IsHolding = false;
 		private static string Search = "";
+		private static PoseContainer _TempPose = new();
+
 		// TODO: Once CMP files are supported, change ^\.(pose)$ to ^\.(pose|cmp)$
 		private static Regex PosesExts = new(@"^\.(pose)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 		private static Regex ImagesExts = new(@"^\.(jpg|jpeg|png|gif)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -105,9 +107,12 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 					ImGui.Text(fileType);
 					ImGui.Text($"Path:\n{file.Path}");
 
-					ImGui.TextDisabled($"Apply to target");
-					ImGui.TextDisabled($"Apply body to target");
-					ImGui.TextDisabled($"Apply expression to target");
+					if (ImGui.Selectable($"Apply to target"))
+						ImportPose(file.Path, ImportPoseFlags.SaveTempAfter | ImportPoseFlags.Face | ImportPoseFlags.Body);
+					if (ImGui.Selectable($"Apply body to target"))
+						ImportPose(file.Path, ImportPoseFlags.SaveTempAfter | ImportPoseFlags.Body);
+					if (ImGui.Selectable($"Apply expression to target"))
+						ImportPose(file.Path, ImportPoseFlags.SaveTempAfter | ImportPoseFlags.Face);
 
 					ImGui.EndPopup();
 				}
@@ -230,18 +235,33 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 		}
 
-		private static PoseContainer _TempPose = new();
-		public unsafe static bool PressPreview() {
-			if (!Visible || FileInFocus == null) return false;
-
+		[Flags]
+		enum ImportPoseFlags {
+			None = 0,
+			Face = 1,
+			Body = 2,
+			SaveTempBefore = 4,
+			SaveTempAfter = 8,
+		}
+		private unsafe static void ImportPose(string path, ImportPoseFlags flags) {
 			var actor = Ktisis.Target;
-			if (actor->Model == null) return false;
-			_TempPose.Store(actor->Model->Skeleton);
+			if (actor->Model == null) return;
+			var trans = Ktisis.Configuration.PoseTransforms;
+
+			if(flags.HasFlag(ImportPoseFlags.SaveTempBefore)) _TempPose.Store(actor->Model->Skeleton);
+			Workspace.Workspace.ImportPath(path, actor, flags.HasFlag(ImportPoseFlags.Body), flags.HasFlag(ImportPoseFlags.Face), trans);
+			if (flags.HasFlag(ImportPoseFlags.SaveTempAfter)) _TempPose.Store(actor->Model->Skeleton);
+		}
+
+		public static bool PressPreview() {
+			if (!Visible || FileInFocus == null) return false;
 
 			IsHolding = true;
 			FileInPreview = FileInFocus;
-			var trans = Ktisis.Configuration.PoseTransforms;
-			Workspace.Workspace.ImportPath(FileInFocus.Path, actor, true, true, trans);
+			var flags = ImportPoseFlags.SaveTempBefore;
+			if (!ImGui.GetIO().KeyShift) flags |= ImportPoseFlags.Body;
+			if (!ImGui.GetIO().KeyCtrl) flags |= ImportPoseFlags.Face;
+			ImportPose(FileInFocus.Path, flags);
 			return true;
 		}
 
