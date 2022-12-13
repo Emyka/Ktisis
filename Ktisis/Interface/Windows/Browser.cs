@@ -268,8 +268,8 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			var ratio = (float)Math.Min((double)ratioX, (double)ratioY);
 
 			return new(
-				image.Width * ratio,
-				image.Height * ratio
+				image.Width * ratioY,
+				image.Height * ratioY
 			);
 		}
 	}
