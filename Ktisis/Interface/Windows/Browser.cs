@@ -21,7 +21,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 	internal class BrowserWindow {
 		private static bool Visible = false;
 		private static List<BrowserPoseFile> BrowserPoseFiles = new();
-		private static float ThumbSize = 15;
+		private static float ThumbSize = ImGui.GetFontSize() * 0.4f;
 		private static Vector2 ThumbSize2D = new(ImGui.GetFontSize() * ThumbSize);
 		private static BrowserPoseFile? FileInFocus = null;
 		private static BrowserPoseFile? FileInPreview = null;
