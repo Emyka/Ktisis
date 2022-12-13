@@ -6,6 +6,8 @@ using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+using Dalamud.Logging;
+
 using ImGuiNET;
 using ImGuiScene;
 
@@ -70,6 +72,10 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			if (!string.IsNullOrWhiteSpace(Search)) files = files.Where(f => f.Path.Contains(Search, StringComparison.OrdinalIgnoreCase)).ToList();
 
 			foreach (var file in files) {
+				// Free up ImageTask memory when image is fully loaded
+				if (file.ImageTask != null && file.ImageTask.IsCompleted)
+					file.ImageTask.Dispose();
+
 				if (!file.Images.Any()) continue; // TODO: Handle files without images
 
 				var image = file.Images.First();
