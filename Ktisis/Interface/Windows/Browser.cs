@@ -143,11 +143,11 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 
 					if (ImGui.Selectable($"Apply to target"))
-						ImportPose(file.Path, ImportPoseFlags.SaveTempAfter | ImportPoseFlags.Face | ImportPoseFlags.Body);
+						ImportPose(file.Path, ImportPoseFlags.SaveTempAfter | ImportPoseFlags.ResetPreview | ImportPoseFlags.Face | ImportPoseFlags.Body);
 					if (ImGui.Selectable($"Apply body to target"))
-						ImportPose(file.Path, ImportPoseFlags.SaveTempAfter | ImportPoseFlags.Body);
+						ImportPose(file.Path, ImportPoseFlags.SaveTempAfter | ImportPoseFlags.ResetPreview | ImportPoseFlags.Body);
 					if (ImGui.Selectable($"Apply expression to target"))
-						ImportPose(file.Path, ImportPoseFlags.SaveTempAfter | ImportPoseFlags.Face);
+						ImportPose(file.Path, ImportPoseFlags.SaveTempAfter | ImportPoseFlags.ResetPreview | ImportPoseFlags.Face);
 
 					ImGui.EndPopup();
 				}
@@ -163,7 +163,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			if (!anyHovered)
 				FileInFocus = null;
 
-			if (FileInFocus != FileInPreview)
+			if (FileInFocus != FileInPreview && FileInPreview != null)
 				RestoreTempPose();
 			if (IsHolding && FileInFocus != null && FileInPreview == null)
 				PressPreview();
@@ -280,13 +280,18 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			Body = 2,
 			SaveTempBefore = 4,
 			SaveTempAfter = 8,
+			ResetPreview = 16,
 		}
 		private unsafe static void ImportPose(string path, ImportPoseFlags flags) {
 			var actor = Ktisis.Target;
 			if (actor->Model == null) return;
 			var trans = Ktisis.Configuration.PoseTransforms;
 
-			if(flags.HasFlag(ImportPoseFlags.SaveTempBefore)) _TempPose.Store(actor->Model->Skeleton);
+			if (flags.HasFlag(ImportPoseFlags.ResetPreview))
+				FileInPreview = null;
+
+			if (flags.HasFlag(ImportPoseFlags.SaveTempBefore)) _TempPose.Store(actor->Model->Skeleton);
+
 			Workspace.Workspace.ImportPath(path, actor, flags.HasFlag(ImportPoseFlags.Body), flags.HasFlag(ImportPoseFlags.Face), trans);
 			if (flags.HasFlag(ImportPoseFlags.SaveTempAfter)) _TempPose.Store(actor->Model->Skeleton);
 		}
