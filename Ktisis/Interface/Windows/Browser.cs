@@ -301,7 +301,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		public string Path { get; set; }
 		public string Name { get; set; }
 		public List<TextureWrap> Images { get; set; } = new();
-		public Task<TextureWrap>? ImageTask;
+		public Task<TextureWrap>? ImageTask { get; set; } = null;
 
 		public BrowserPoseFile(string path, string name) {
 			Path = path;
