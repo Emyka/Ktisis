@@ -132,7 +132,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				else
 					fileType = "Unknown file type";
 
-				if (ImGui.BeginPopupContextItem($"{file.Path}", ImGuiPopupFlags.MouseButtonRight | ImGuiPopupFlags.AnyPopupId)) {
+				if (ImGui.BeginPopupContextItem($"PoseBrowser##ContextMenu##{file.Path}", ImGuiPopupFlags.MouseButtonRight | ImGuiPopupFlags.AnyPopupId)) {
 					ImGui.Text(file.Name);
 					ImGui.Separator();
 					ImGui.Text(fileType);
