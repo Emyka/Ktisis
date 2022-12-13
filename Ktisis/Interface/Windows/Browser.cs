@@ -63,13 +63,15 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			}
 			if (!BrowserPoseFiles.Any()) Sync();
 
-			DrawToolBar();
+			var files = BrowserPoseFiles;
+			if (!string.IsNullOrWhiteSpace(Search)) files = files.Where(f => f.Path.Contains(Search, StringComparison.OrdinalIgnoreCase)).ToList();
+
+
+			DrawToolBar(files.Count);
 			ImGui.Spacing();
 
 			ImGui.BeginChildFrame(76,ImGui.GetContentRegionAvail());
 			bool anyHovered = false;
-			var files = BrowserPoseFiles;
-			if (!string.IsNullOrWhiteSpace(Search)) files = files.Where(f => f.Path.Contains(Search, StringComparison.OrdinalIgnoreCase)).ToList();
 
 			foreach (var file in files) {
 				// Free up ImageTask memory when image is fully loaded
@@ -128,11 +130,8 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		}
 
 
-		private static void DrawToolBar() {
+		private static void DrawToolBar(int hits) {
 
-			ImGui.Text($" Hits: {BrowserPoseFiles.Count}");
-
-			ImGui.SameLine();
 			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 10);
 			if (ImGui.SliderFloat("##Browser##ThumbSize", ref ThumbSize, 2, 100))
 				ThumbSize2D = new(ImGui.GetFontSize() * ThumbSize);
@@ -148,6 +147,10 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			ImGui.InputTextWithHint("##Browser##Search","Search", ref Search, 100, ImGuiInputTextFlags.AutoSelectAll);
 
 			ImGui.SameLine();
+			ImGui.Text($"({hits})");
+
+			ImGui.SameLine();
+
 			if (GuiHelpers.IconButton(Dalamud.Interface.FontAwesomeIcon.FolderPlus)) {
 				KtisisGui.FileDialogManager.OpenFolderDialog(
 					"Add pose library path",
