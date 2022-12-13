@@ -11,6 +11,7 @@ using ImGuiScene;
 
 using Ktisis.Data.Files;
 using Ktisis.Data.Serialization;
+using Ktisis.Structs.Actor.State;
 using Ktisis.Structs.Poses;
 using Ktisis.Util;
 
@@ -26,7 +27,28 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		private static string Search = "";
 
 		// Toggle visibility
-		public static void Toggle() => Visible = !Visible;
+		public static void Toggle() {
+			if (Visible) ClearImageCache();
+			Visible = !Visible;
+		}
+
+		public static void ClearImageCache() {
+			PluginLog.Verbose($"Clear Pose Browser images");
+			BrowserPoseFiles.ForEach(f => {
+				f.ImageTask?.Dispose();
+				f.Images.ForEach(i => {
+					i.Dispose();
+				});
+			});
+			BrowserPoseFiles.Clear();
+			FileInFocus = null;
+			FileInPreview = null;
+		}
+		public static void OnGposeToggle(ActorGposeState gposeState) {
+			if(gposeState == ActorGposeState.OFF) {
+				ClearImageCache();
+			}
+		}
 
 		// Draw window
 		public static void Draw() {
@@ -136,7 +158,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			ImGui.SameLine();
 			if (GuiHelpers.IconButtonHoldConfirm(Dalamud.Interface.FontAwesomeIcon.FolderMinus, $"Delete all {Ktisis.Configuration.BrowserLibraryPaths.Count} saved pose librarie(s):\n{libList}")) {
 				Ktisis.Configuration.BrowserLibraryPaths.Clear();
-				BrowserPoseFiles.Clear();
+				ClearImageCache();
 			}
 
 
@@ -146,7 +168,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		private static void Sync() {
 			if (!Ktisis.Configuration.BrowserLibraryPaths.Any(p => Directory.Exists(p))) return;
 
-			BrowserPoseFiles.Clear();
+			ClearImageCache();
 
 
 			// TODO: Once CMP files are supported, change ^\.(pose)$ to ^\.(pose|cmp)$

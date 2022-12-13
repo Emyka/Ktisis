@@ -14,6 +14,7 @@ using Ktisis.Structs.Actor;
 using Ktisis.History;
 using Ktisis.Events;
 using Ktisis.Overlay;
+using Ktisis.Interface.Windows.PoseBrowser;
 
 namespace Ktisis {
 	public sealed class Ktisis : IDalamudPlugin {
@@ -65,6 +66,7 @@ namespace Ktisis {
 			Interop.Hooks.PoseHooks.Init();
 
 			EventManager.OnGPoseChange += Workspace.OnEnterGposeToggle; // must be placed before ActorStateWatcher.Init()
+			EventManager.OnGPoseChange += BrowserWindow.OnGposeToggle;
 
 			Input.Init();
 			ActorStateWatcher.Init();
@@ -104,6 +106,7 @@ namespace Ktisis {
 			Interop.Alloc.Dispose();
 			ActorStateWatcher.Instance.Dispose();
 			EventManager.OnGPoseChange -= Workspace.OnEnterGposeToggle;
+			EventManager.OnGPoseChange -= BrowserWindow.OnGposeToggle;
 
 			Data.Sheets.Cache.Clear();
 
