@@ -153,12 +153,12 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				}
 
 				// TODO: display discreet name in the image instead of tooltip
-				GuiHelpers.Tooltip($"{file.Name}\n{Path.GetExtension(file.Path)}");
+
+				// Restore the cursor to the same line to be able to calculate available region
 				ImGui.SameLine();
 
-				// Hacky line wrap
 				if (ImGui.GetContentRegionAvail().X < ThumbSize2D.X * 0.66f)
-					ImGui.Text("");
+					ImGui.Text(""); // Newline() seems buggy, so wrap with Text's natural line break
 			}
 			if (!anyHovered)
 				FileInFocus = null;
