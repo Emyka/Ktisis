@@ -87,8 +87,37 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 				if (ShowImages && !file.Images.Any()) continue;
 
+
+				var ishovering = FileInFocus == file;
+				float borderSize = ImGui.GetStyle().FramePadding.X;
+				ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, borderSize);
+
+				if ((file.ImageTask == null || file.ImageTask.IsCompleted) && file.Images.Any()) {
+
 				var image = file.Images.First();
-				ImGui.Image(image.ImGuiHandle, ScaleImage(image));
+
+					ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.FrameBg]);
+					ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(borderSize));
+
+					ImGui.ImageButton(image.ImGuiHandle, ScaleImage(image));
+					ImGui.PopStyleVar();
+					ImGui.PopStyleColor();
+				} else {
+					ImGui.PushStyleVar(ImGuiStyleVar.FrameBorderSize, borderSize);
+					ImGui.PushStyleColor(ImGuiCol.Border, ImGui.GetStyle().Colors[ishovering ? (int)ImGuiCol.ButtonHovered : (int)ImGuiCol.WindowBg]); ;
+					ImGui.PushStyleColor(ImGuiCol.ButtonHovered, ImGui.GetStyle().Colors[(int)ImGuiCol.FrameBg]);
+					ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.FrameBg]);
+
+					ImGui.Button($"{file.Name}##ContextMenu##{file.Path}", ThumbSize2D + (new Vector2(borderSize * 2)));
+
+					ImGui.PopStyleColor(3);
+					ImGui.PopStyleVar();
+				}
+
+				//ImGui.PopStyleColor();
+				ImGui.PopStyleVar(1);
+
+
 				if (ImGui.IsItemHovered()) {
 					FileInFocus = file;
 					anyHovered |= true;
