@@ -33,6 +33,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		// TODO: Once CMP files are supported, change ^\.(pose)$ to ^\.(pose|cmp)$
 		private static Regex PosesExts = new(@"^\.(pose)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 		private static Regex ImagesExts = new(@"^\.(jpg|jpeg|png|gif)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+		private static Regex ShortPath = new(@"^$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 		// Toggle visibility
 		public static void Toggle() {
@@ -106,7 +107,11 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 					ImGui.Text(file.Name);
 					ImGui.Separator();
 					ImGui.Text(fileType);
-					ImGui.Text($"Path:\n{file.Path}");
+
+					if (ImGui.Selectable($"{ShortPath.Replace(file.Path, "").TrimStart(new char[] { '\\', '/' })}"))
+						ImGui.SetClipboardText(Path.GetDirectoryName(file.Path));
+
+
 
 					if (ImGui.Selectable($"Apply to target"))
 						ImportPose(file.Path, ImportPoseFlags.SaveTempAfter | ImportPoseFlags.Face | ImportPoseFlags.Body);
@@ -190,7 +195,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			if (!Ktisis.Configuration.BrowserLibraryPaths.Any(p => Directory.Exists(p))) return;
 
 			ClearImageCache();
-
+			ShortPath = new("^(" + String.Join("|", Ktisis.Configuration.BrowserLibraryPaths.Select(p => Regex.Escape(p))) + ")", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 
 			List<FileInfo> tempPosesFound = new();
