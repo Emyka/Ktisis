@@ -223,6 +223,8 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 			ImGui.Checkbox($"Images Only##PoseBrowser", ref ShowImages);
 			ImGui.SameLine();
+			if(ImGui.Checkbox($"Preload Images##PoseBrowser", ref PreloadImages))
+				Sync();
 			ImGui.SameLine();
 			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 4);
 			ImGui.InputInt($"Columns##PoseBrowser", ref Columns, 1, 2);
