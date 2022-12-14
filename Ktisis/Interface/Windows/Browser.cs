@@ -63,6 +63,8 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 			if (!ImGui.Begin("Pose Browser", ref Visible)) {
 				ImGui.End();
+				if (BrowserPoseFiles.Any())
+					ClearImageCache();
 				return;
 			}
 			if (!BrowserPoseFiles.Any()) Sync();
@@ -384,10 +386,11 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			}
 		}
 		public void DisposeImage() {
-			this.ImageTask?.Dispose();
-			this.ImageTask = null;
+			this.Image?.ImGuiHandle.Free();
 			this.Image?.Dispose();
 			this.Image = null;
+			this.ImageTask?.Dispose();
+			this.ImageTask = null;
 		}
 	}
 }
