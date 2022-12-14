@@ -27,9 +27,9 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		private static BrowserPoseFile? FileInPreview = null;
 		private static bool IsHolding = false;
 		private static string Search = "";
-		private static bool ShowImages = true;
+		private static bool FilterImagesOnly = false;
 		private static PoseContainer _TempPose = new();
-		private static bool PreloadImages = true;
+		private static bool StreamImageLoading = false;
 		private static int Columns = 0;
 
 		// TODO: Once CMP files are supported, change ^\.(pose)$ to ^\.(pose|cmp)$
@@ -84,14 +84,14 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 					file.ImageTask = null;
 				}
 
-				if (!PreloadImages) {
+				if (StreamImageLoading) {
 					if (file.IsImageLoadable)
 						file.LoadImage();
 					if (file.IsImageUnloadable)
 						file.DisposeImage();
 				}
 
-				if (ShowImages && file.ImagePath == null) continue;
+				if (FilterImagesOnly && file.ImagePath == null) continue;
 
 				var ishovering = FileInFocus == file;
 				float borderSize = ImGui.GetStyle().FramePadding.X;
@@ -182,10 +182,32 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 		private static void DrawToolBar(int hits) {
 
-			if (GuiHelpers.IconButton(Dalamud.Interface.FontAwesomeIcon.Sync, default, $"SyncButton##PoseBrowser"))
+			if (GuiHelpers.IconButtonTooltip(Dalamud.Interface.FontAwesomeIcon.Sync,"Refresh poses and images", default, $"SyncButton##PoseBrowser"))
 				Sync();
+
+			ImGui.SameLine(0,ImGui.GetFontSize());
+			ImGui.Text($"({hits})");
+
 			ImGui.SameLine();
-			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 10);
+			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 7);
+			ImGui.InputTextWithHint("##Browser##Search","Search", ref Search, 100, ImGuiInputTextFlags.AutoSelectAll);
+
+			// images
+			ImGui.SameLine(0,ImGui.GetFontSize());
+			GuiHelpers.IconButtonToggle(Dalamud.Interface.FontAwesomeIcon.Image, ref FilterImagesOnly, "Images Only", default, $"Images Only##PoseBrowser");
+
+			ImGui.SameLine();
+			if (GuiHelpers.IconButtonToggle(Dalamud.Interface.FontAwesomeIcon.Stream, ref StreamImageLoading, "Stream image load (No image preload)", default, $"Preload Images##PoseBrowser"))
+				Sync();
+
+			// size/columns
+			ImGui.SameLine(0, ImGui.GetFontSize());
+			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 5);
+			ImGui.InputInt($"##Columns##PoseBrowser", ref Columns, 1, 2);
+			GuiHelpers.Tooltip("Number of Images before a linebreak\n0: Auto");
+
+			ImGui.SameLine();
+			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 5);
 			if (ImGui.SliderFloat("##Browser##ThumbSize", ref ThumbSize, 2, 100))
 				ThumbSize2D = new(ImGui.GetFontSize() * ThumbSize);
 			GuiHelpers.Tooltip("Thumb size");
@@ -194,16 +216,9 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				ThumbSize += mouseWheel * 0.5f;
 				ThumbSize2D = new(ImGui.GetFontSize() * ThumbSize);
 			}
-			ImGui.SameLine();
 
-			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 10);
-			ImGui.InputTextWithHint("##Browser##Search","Search", ref Search, 100, ImGuiInputTextFlags.AutoSelectAll);
-
-			ImGui.SameLine();
-			ImGui.Text($"({hits})");
-
-			ImGui.SameLine();
-
+			// add/clear library
+			ImGui.SameLine(0, ImGui.GetFontSize());
 			if (GuiHelpers.IconButton(Dalamud.Interface.FontAwesomeIcon.FolderPlus)) {
 				KtisisGui.FileDialogManager.OpenFolderDialog(
 					"Add pose library path",
@@ -222,16 +237,6 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				Ktisis.Configuration.BrowserLibraryPaths.Clear();
 				ClearImageCache();
 			}
-			ImGui.SameLine();
-
-			ImGui.Checkbox($"Images Only##PoseBrowser", ref ShowImages);
-			ImGui.SameLine();
-			if(ImGui.Checkbox($"Preload Images##PoseBrowser", ref PreloadImages))
-				Sync();
-			ImGui.SameLine();
-			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 4);
-			ImGui.InputInt($"Columns##PoseBrowser", ref Columns, 1, 2);
-
 
 		}
 
@@ -259,7 +264,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				// TODO: verify if the file is valid
 
 				BrowserPoseFile entry = new(item.FullName, Path.GetFileNameWithoutExtension(item.Name));
-				if (PreloadImages)
+				if (!StreamImageLoading)
 					entry.LoadImage();
 				BrowserPoseFiles.Add(entry);
 			}
