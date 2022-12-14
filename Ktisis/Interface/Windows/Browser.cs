@@ -29,8 +29,9 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		private static string Search = "";
 		private static bool FilterImagesOnly = false;
 		private static PoseContainer _TempPose = new();
-		private static bool StreamImageLoading = false;
+		internal static bool StreamImageLoading = false;
 		private static int Columns = 0;
+		internal static bool UseAsync = true;
 
 		// TODO: Once CMP files are supported, change ^\.(pose)$ to ^\.(pose|cmp)$
 		internal static Regex PosesExts = new(@"^\.(pose)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -378,11 +379,21 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		public void LoadImage() {
 			if (this.ImagePath == null) return;
 
-			if (File.Exists(this.ImagePath))
-				Ktisis.UiBuilder.LoadImageAsync(this.ImagePath).ContinueWith(t => this.Image = t.Result);
-			else {
+			if (File.Exists(this.ImagePath)) {
+
+				// Always use Async if preloaded
+				if (BrowserWindow.UseAsync || !BrowserWindow.StreamImageLoading)
+					Ktisis.UiBuilder.LoadImageAsync(this.ImagePath).ContinueWith(t => this.Image = t.Result);
+				else
+					this.Image = Ktisis.UiBuilder.LoadImage(this.ImagePath);
+
+			} else {
 				var bytes = Convert.FromBase64String(this.ImagePath);
-				Ktisis.UiBuilder.LoadImageAsync(bytes).ContinueWith(t => this.Image = t.Result);
+
+				if (BrowserWindow.UseAsync || !BrowserWindow.StreamImageLoading)
+					Ktisis.UiBuilder.LoadImageAsync(bytes).ContinueWith(t => this.Image = t.Result);
+				else
+					this.Image = Ktisis.UiBuilder.LoadImage(bytes);
 			}
 		}
 		public void DisposeImage() {
