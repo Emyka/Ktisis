@@ -19,24 +19,27 @@ using Ktisis.Util;
 
 namespace Ktisis.Interface.Windows.PoseBrowser {
 	internal class BrowserWindow {
+
+		// configurations variables
+		private static int Columns = 0;
+		private static bool FilterImagesOnly = false;
+		internal static bool StreamImageLoading = false;
+		internal static bool UseAsync = true;
+		internal static Regex PosesExts = new(@"^\.(pose)$", RegexOptions.IgnoreCase | RegexOptions.Compiled); // TODO: Add .cmp when supported
+		internal static Regex ImagesExts = new(@"^\.(jpg|jpeg|png|gif)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+		// Temp variables
 		private static bool Visible = false;
-		private static List<BrowserPoseFile> BrowserPoseFiles = new();
 		private static float ThumbSize = ImGui.GetFontSize() * 0.4f;
 		private static Vector2 ThumbSize2D = new(ImGui.GetFontSize() * ThumbSize);
+		private static List<BrowserPoseFile> BrowserPoseFiles = new();
 		private static BrowserPoseFile? FileInFocus = null;
 		private static BrowserPoseFile? FileInPreview = null;
+		private static PoseContainer _TempPose = new();
 		private static bool IsHolding = false;
 		private static string Search = "";
-		private static bool FilterImagesOnly = false;
-		private static PoseContainer _TempPose = new();
-		internal static bool StreamImageLoading = false;
-		private static int Columns = 0;
-		internal static bool UseAsync = true;
-
-		// TODO: Once CMP files are supported, change ^\.(pose)$ to ^\.(pose|cmp)$
-		internal static Regex PosesExts = new(@"^\.(pose)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-		internal static Regex ImagesExts = new(@"^\.(jpg|jpeg|png|gif)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 		private static Regex ShortPath = new(@"^$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
 
 		// Toggle visibility
 		public static void Toggle() {
