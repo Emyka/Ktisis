@@ -182,6 +182,9 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 		private static void DrawToolBar(int hits) {
 
+			if (GuiHelpers.IconButton(Dalamud.Interface.FontAwesomeIcon.Sync, default, $"SyncButton##PoseBrowser"))
+				Sync();
+			ImGui.SameLine();
 			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 10);
 			if (ImGui.SliderFloat("##Browser##ThumbSize", ref ThumbSize, 2, 100))
 				ThumbSize2D = new(ImGui.GetFontSize() * ThumbSize);
