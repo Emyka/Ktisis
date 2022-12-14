@@ -202,9 +202,11 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			ImGui.SameLine(0, ImGui.GetFontSize());
 			GuiHelpers.IconButtonToggle(Dalamud.Interface.FontAwesomeIcon.Image, ref FilterImagesOnly, "Images Only", default, $"Images Only##PoseBrowser");
 
-			ImGui.SameLine();
-			if (GuiHelpers.IconButtonToggle(Dalamud.Interface.FontAwesomeIcon.Stream, ref StreamImageLoading, "Stream image load (No image preload)", default, $"Preload Images##PoseBrowser"))
-				Sync();
+
+			// Temporary disable stream image loading as loading seems more resource hungry than keep them all loaded.
+			//ImGui.SameLine();
+			//if (GuiHelpers.IconButtonToggle(Dalamud.Interface.FontAwesomeIcon.Stream, ref StreamImageLoading, "Stream image load (No image preload)", default, $"Preload Images##PoseBrowser"))
+			//	Sync();
 
 			// size/columns
 			ImGui.SameLine(0, ImGui.GetFontSize());
