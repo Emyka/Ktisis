@@ -30,6 +30,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		private static bool ShowImages = true;
 		private static PoseContainer _TempPose = new();
 		private static bool PreloadImages = true;
+		private static int Columns = 0;
 
 		// TODO: Once CMP files are supported, change ^\.(pose)$ to ^\.(pose|cmp)$
 		internal static Regex PosesExts = new(@"^\.(pose)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -75,7 +76,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 			ImGui.BeginChildFrame(76,ImGui.GetContentRegionAvail());
 			bool anyHovered = false;
-
+			int col = 1;
 			foreach (var file in files) {
 				// Free up ImageTask memory when image is fully loaded
 				if (file.ImageTask != null && file.ImageTask.IsCompleted) {
@@ -157,9 +158,13 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				// TODO: display discreet name in the image instead of tooltip
 
 				// Restore the cursor to the same line to be able to calculate available region
-				ImGui.SameLine();
+				if(Columns == 0 || col < Columns) {
+					col++;
+					ImGui.SameLine();
+				} else
+					col = 1;
 
-				if (ImGui.GetContentRegionAvail().X < ThumbSize2D.X * 0.66f)
+				if (Columns == 0 && ImGui.GetContentRegionAvail().X < ThumbSize2D.X * 0.66f)
 					ImGui.Text(""); // Newline() seems buggy, so wrap with Text's natural line break
 			}
 			if (!anyHovered)
@@ -218,7 +223,9 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 			ImGui.Checkbox($"Images Only##PoseBrowser", ref ShowImages);
 			ImGui.SameLine();
-			ImGui.Checkbox($"Preload Images##PoseBrowser", ref PreloadImages);
+			ImGui.SameLine();
+			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 4);
+			ImGui.InputInt($"Columns##PoseBrowser", ref Columns, 1, 2);
 
 
 		}
