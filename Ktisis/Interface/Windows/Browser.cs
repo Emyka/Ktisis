@@ -51,7 +51,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			FileInPreview = null;
 		}
 		public static void OnGposeToggle(ActorGposeState gposeState) {
-			if(gposeState == ActorGposeState.OFF) {
+			if (gposeState == ActorGposeState.OFF) {
 				ClearImageCache();
 			}
 		}
@@ -74,7 +74,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			DrawToolBar(files.Count);
 			ImGui.Spacing();
 
-			ImGui.BeginChildFrame(76,ImGui.GetContentRegionAvail());
+			ImGui.BeginChildFrame(76, ImGui.GetContentRegionAvail());
 			bool anyHovered = false;
 			int col = 1;
 			foreach (var file in files) {
@@ -158,7 +158,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				// TODO: display discreet name in the image instead of tooltip
 
 				// Restore the cursor to the same line to be able to calculate available region
-				if(Columns == 0 || col < Columns) {
+				if (Columns == 0 || col < Columns) {
 					col++;
 					ImGui.SameLine();
 				} else
@@ -182,18 +182,18 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 		private static void DrawToolBar(int hits) {
 
-			if (GuiHelpers.IconButtonTooltip(Dalamud.Interface.FontAwesomeIcon.Sync,"Refresh poses and images", default, $"SyncButton##PoseBrowser"))
+			if (GuiHelpers.IconButtonTooltip(Dalamud.Interface.FontAwesomeIcon.Sync, "Refresh poses and images", default, $"SyncButton##PoseBrowser"))
 				Sync();
 
-			ImGui.SameLine(0,ImGui.GetFontSize());
+			ImGui.SameLine(0, ImGui.GetFontSize());
 			ImGui.Text($"({hits})");
 
 			ImGui.SameLine();
 			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 7);
-			ImGui.InputTextWithHint("##Browser##Search","Search", ref Search, 100, ImGuiInputTextFlags.AutoSelectAll);
+			ImGui.InputTextWithHint("##Browser##Search", "Search", ref Search, 100, ImGuiInputTextFlags.AutoSelectAll);
 
 			// images
-			ImGui.SameLine(0,ImGui.GetFontSize());
+			ImGui.SameLine(0, ImGui.GetFontSize());
 			GuiHelpers.IconButtonToggle(Dalamud.Interface.FontAwesomeIcon.Image, ref FilterImagesOnly, "Images Only", default, $"Images Only##PoseBrowser");
 
 			ImGui.SameLine();
@@ -249,11 +249,11 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 
 			List<FileInfo> tempPosesFound = new();
-			foreach(var path in Ktisis.Configuration.BrowserLibraryPaths) {
+			foreach (var path in Ktisis.Configuration.BrowserLibraryPaths) {
 				var pathItems = from d in new DirectoryInfo(path)
 						.EnumerateFiles("*", SearchOption.AllDirectories)
 						.Where(file => PosesExts.IsMatch(file.Extension))
-					select d;
+								select d;
 				tempPosesFound = tempPosesFound.Concat(pathItems).ToList();
 			}
 			var posesFound = tempPosesFound.OrderBy(f => f.FullName);
