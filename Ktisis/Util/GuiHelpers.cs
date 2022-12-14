@@ -4,6 +4,7 @@ using System.Numerics;
 using ImGuiNET;
 
 using Dalamud.Interface;
+using Dalamud.Utility;
 
 using Ktisis.Interface.Components;
 
@@ -22,6 +23,16 @@ namespace Ktisis.Util
 		public static bool IconButtonHoldConfirm(FontAwesomeIcon icon, string tooltip, Vector2 size = default, string hiddenLabel = "") =>
 			IconButtonHoldConfirm(icon, tooltip, ImGui.GetIO().KeyCtrl && ImGui.GetIO().KeyShift, size, hiddenLabel);
 
+		public static bool IconButtonToggle(FontAwesomeIcon icon, ref bool value, string tooltip = "", Vector2 size = default, string hiddenLabel = "") {
+			if (value) ImGui.PushStyleColor(ImGuiCol.Text, VisibleCheckmarkColor());
+			var used = IconButton(icon, size, hiddenLabel);
+			if (value) ImGui.PopStyleColor();
+			Tooltip(tooltip);
+			if (used)
+				value = !value;
+
+			return used;
+		}
 		public static bool IconButtonTooltip(FontAwesomeIcon icon, string tooltip, Vector2 size = default, string hiddenLabel = "") {
 			bool accepting = IconButton(icon, size, hiddenLabel);
 			Tooltip(tooltip);
@@ -76,7 +87,7 @@ namespace Ktisis.Util
 
 
 		public static void Tooltip(string text) {
-			if (ImGui.IsItemHovered()) {
+			if (!text.IsNullOrWhitespace() && ImGui.IsItemHovered()) {
 				ImGui.BeginTooltip();
 				ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35.0f);
 				ImGui.TextUnformatted(text);
