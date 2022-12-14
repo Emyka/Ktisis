@@ -29,10 +29,11 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		private static string Search = "";
 		private static bool ShowImages = true;
 		private static PoseContainer _TempPose = new();
+		private static bool PreloadImages = true;
 
 		// TODO: Once CMP files are supported, change ^\.(pose)$ to ^\.(pose|cmp)$
-		private static Regex PosesExts = new(@"^\.(pose)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-		private static Regex ImagesExts = new(@"^\.(jpg|jpeg|png|gif)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+		internal static Regex PosesExts = new(@"^\.(pose)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+		internal static Regex ImagesExts = new(@"^\.(jpg|jpeg|png|gif)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 		private static Regex ShortPath = new(@"^$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 		// Toggle visibility
@@ -43,12 +44,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 		public static void ClearImageCache() {
 			PluginLog.Verbose($"Clear Pose Browser images");
-			BrowserPoseFiles.ForEach(f => {
-				f.ImageTask?.Dispose();
-				f.Images.ForEach(i => {
-					i.Dispose();
-				});
-			});
+			BrowserPoseFiles.ForEach(f => f.DisposeImage());
 			BrowserPoseFiles.Clear();
 			FileInFocus = null;
 			FileInPreview = null;
@@ -82,24 +78,29 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 			foreach (var file in files) {
 				// Free up ImageTask memory when image is fully loaded
-				if (file.ImageTask != null && file.ImageTask.IsCompleted)
+				if (file.ImageTask != null && file.ImageTask.IsCompleted) {
 					file.ImageTask.Dispose();
+					file.ImageTask = null;
+				}
 
-				if (ShowImages && !file.Images.Any()) continue;
+				if (!PreloadImages) {
+					if (file.IsImageLoadable)
+						file.LoadImage();
+					if (file.IsImageUnloadable)
+						file.DisposeImage();
+				}
 
+				if (ShowImages && file.ImagePath == null) continue;
 
 				var ishovering = FileInFocus == file;
 				float borderSize = ImGui.GetStyle().FramePadding.X;
 				ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, borderSize);
 
-				if ((file.ImageTask == null || file.ImageTask.IsCompleted) && file.Images.Any()) {
-
-					var image = file.Images.First();
-
+				if ((file.ImageTask == null || file.ImageTask.IsCompleted) && file.Image != null) {
 					ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.FrameBg]);
 					ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(borderSize));
 
-					ImGui.ImageButton(image.ImGuiHandle, ScaleImage(image));
+					ImGui.ImageButton(file.Image.ImGuiHandle, ScaleImage(file.Image));
 					ImGui.PopStyleVar();
 					ImGui.PopStyleColor();
 				} else {
@@ -117,6 +118,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				//ImGui.PopStyleColor();
 				ImGui.PopStyleVar(1);
 
+				file.IsVisible = ImGui.IsItemVisible();
 
 				if (ImGui.IsItemHovered()) {
 					FileInFocus = file;
@@ -215,6 +217,8 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			ImGui.SameLine();
 
 			ImGui.Checkbox($"Images Only##PoseBrowser", ref ShowImages);
+			ImGui.SameLine();
+			ImGui.Checkbox($"Preload Images##PoseBrowser", ref PreloadImages);
 
 
 		}
@@ -242,35 +246,11 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				if (string.IsNullOrEmpty(item.Name) || (item.Name[0] == '.')) continue;
 				// TODO: verify if the file is valid
 
-
 				BrowserPoseFile entry = new(item.FullName, Path.GetFileNameWithoutExtension(item.Name));
-
-				// Add embedded image if exists
-				if (item.Extension == ".pose" && File.ReadLines(item.FullName).Any(line => line.Contains("\"Base64Image\""))) {
-
-					var content = File.ReadAllText(item.FullName);
-					var pose = JsonParser.Deserialize<PoseFile>(content);
-					if (pose?.Base64Image != null) {
-						var bytes = Convert.FromBase64String(pose.Base64Image);
-						Ktisis.UiBuilder.LoadImageAsync(bytes).ContinueWith(t => entry.Images.Add(t.Result));
-					}
-				} else {
-
-					// Try finding related images close to the pose file
-					// TODO: improve algo for better relevance
-					var dir = Path.GetDirectoryName(item.FullName);
-					if (dir != null) {
-						var imageFile = new DirectoryInfo(dir)
-							.EnumerateFiles("*", SearchOption.TopDirectoryOnly)
-							.FirstOrDefault(file => ImagesExts.IsMatch(file.Extension));
-						if( imageFile != null)
-							Ktisis.UiBuilder.LoadImageAsync(imageFile.FullName).ContinueWith(t=> entry.Images.Add(t.Result));
-					}
-				}
-
+				if (PreloadImages)
+					entry.LoadImage();
 				BrowserPoseFiles.Add(entry);
 			}
-
 		}
 
 		[Flags]
@@ -339,12 +319,58 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 	internal class BrowserPoseFile {
 		public string Path { get; set; }
 		public string Name { get; set; }
-		public List<TextureWrap> Images { get; set; } = new();
+		public TextureWrap? Image { get; set; } = null;
+		public string? ImagePath { get; set; } = null;
 		public Task<TextureWrap>? ImageTask { get; set; } = null;
+		public bool IsVisible { get; set; } = false;
 
 		public BrowserPoseFile(string path, string name) {
 			Path = path;
 			Name = name;
+			this.FindImages();
+		}
+
+		public bool IsImageLoadable => this.IsVisible && this.Image == null && this.ImageTask == null && this.ImagePath != null;
+		public bool IsImageUnloadable => !this.IsVisible && (this.Image != null || this.ImageTask != null);
+
+		public void FindImages() {
+			// Add embedded image if exists
+			if (System.IO.Path.GetFileNameWithoutExtension(this.Path) == ".pose" && File.ReadLines(this.Path).Any(line => line.Contains("\"Base64Image\""))) {
+
+				var content = File.ReadAllText(this.Path);
+				var pose = JsonParser.Deserialize<PoseFile>(content);
+				if (pose?.Base64Image != null) {
+					this.ImagePath = pose.Base64Image;
+				}
+			} else {
+
+				// Try finding related images close to the pose file
+				// TODO: improve algo for better relevance
+				var dir = System.IO.Path.GetDirectoryName(this.Path);
+				if (dir != null) {
+					var imageFile = new DirectoryInfo(dir)
+						.EnumerateFiles("*", SearchOption.TopDirectoryOnly)
+						.FirstOrDefault(file => BrowserWindow.ImagesExts.IsMatch(file.Extension));
+					if (imageFile != null)
+						this.ImagePath = imageFile.FullName;
+				}
+			}
+		}
+		public void LoadImage() {
+			if (this.ImagePath == null) return;
+
+			if (File.Exists(this.ImagePath))
+				Ktisis.UiBuilder.LoadImageAsync(this.ImagePath).ContinueWith(t => this.Image = t.Result);
+			else {
+				var bytes = Convert.FromBase64String(this.ImagePath);
+				Ktisis.UiBuilder.LoadImageAsync(bytes).ContinueWith(t => this.Image = t.Result);
+			}
+		}
+		public void DisposeImage() {
+			this.ImageTask?.Dispose();
+			this.ImageTask = null;
+			this.Image?.Dispose();
+			this.Image = null;
 		}
 	}
 }
