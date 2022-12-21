@@ -402,7 +402,6 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			}
 		}
 		public void DisposeImage() {
-			this.Image?.ImGuiHandle.Free();
 			this.Image?.Dispose();
 			this.Image = null;
 			this.ImageTask?.Dispose();
