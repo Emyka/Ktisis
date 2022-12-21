@@ -23,6 +23,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		// configurations variables
 		private static int Columns = 0;
 		private static bool FilterImagesOnly = false;
+		private static bool CropImages = true;
 		internal static bool StreamImageLoading = false;
 		internal static bool UseAsync = true;
 		internal static Regex PosesExts = new(@"^\.(pose)$", RegexOptions.IgnoreCase | RegexOptions.Compiled); // TODO: Add .cmp when supported
@@ -102,12 +103,16 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				var ishovering = FileInFocus == file;
 				float borderSize = ImGui.GetStyle().FramePadding.X;
 				ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, borderSize);
-
-				if ((file.ImageTask == null || file.ImageTask.IsCompleted) && file.Image != null) {
+				var hasImage = (file.ImageTask == null || file.ImageTask.IsCompleted) && file.Image != null;
+				if (hasImage) {
 					ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.FrameBg]);
 					ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(borderSize));
 
-					ImGui.ImageButton(file.Image.ImGuiHandle, ScaleImage(file.Image));
+					if (CropImages) {
+						(var uv0, var uv1) = CropRatioImage(file.Image!);
+						ImGui.ImageButton(file.Image!.ImGuiHandle, ThumbSize2D, uv0, uv1);
+					} else
+						ImGui.ImageButton(file.Image!.ImGuiHandle, ScaleImage(file.Image));
 					ImGui.PopStyleVar();
 					ImGui.PopStyleColor();
 				} else {
@@ -149,6 +154,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 					if (ImGui.Selectable($"{ShortPath.Replace(file.Path, "").TrimStart(new char[] { '\\', '/' })}"))
 						ImGui.SetClipboardText(Path.GetDirectoryName(file.Path));
 
+					if (hasImage) ImGui.Text($"Image Size: {file.Image!.Width}*{file.Image.Height}");
 
 
 					if (ImGui.Selectable($"Apply to target"))
@@ -170,7 +176,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				} else
 					col = 1;
 
-				if (Columns == 0 && ImGui.GetContentRegionAvail().X < ThumbSize2D.X * 0.66f)
+				if (Columns == 0 && ImGui.GetContentRegionAvail().X < ThumbSize2D.X)
 					ImGui.Text(""); // Newline() seems buggy, so wrap with Text's natural line break
 			}
 			if (!anyHovered)
@@ -210,9 +216,13 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 			// size/columns
 			ImGui.SameLine(0, ImGui.GetFontSize());
-			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 5);
-			ImGui.InputInt($"##Columns##PoseBrowser", ref Columns, 1, 2);
-			GuiHelpers.Tooltip("Number of Images before a linebreak\n0: Auto");
+			GuiHelpers.IconButtonToggle(Dalamud.Interface.FontAwesomeIcon.CropAlt, ref CropImages, "Crop Images", default, $"CropImages##PoseBrowser");
+			if (!CropImages) {
+				ImGui.SameLine();
+				ImGui.SetNextItemWidth(ImGui.GetFontSize() * 5);
+				ImGui.InputInt($"##Columns##PoseBrowser", ref Columns, 1, 2);
+				GuiHelpers.Tooltip("Number of Images before a linebreak\n0: Auto");
+			}
 
 			ImGui.SameLine();
 			ImGui.SetNextItemWidth(ImGui.GetFontSize() * 5);
@@ -330,6 +340,32 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			return true;
 		}
 
+
+		private static (Vector2, Vector2) CropRatioImage(TextureWrap image) {
+
+			float left = 0, top = 0, right = 1, bottom = 1;
+
+			float sourceAspectRatio = (float)image.Width / image.Height;
+			float targetAspectRatio = (float)ThumbSize2D.X / ThumbSize2D.Y;
+
+			if (sourceAspectRatio > targetAspectRatio) {
+				float excedingRatioH = Math.Abs(targetAspectRatio - sourceAspectRatio) / sourceAspectRatio;
+				float excedingRatioHHalf = excedingRatioH / 2;
+
+				left = excedingRatioHHalf;
+				right = 1 - excedingRatioHHalf;
+			} else if (sourceAspectRatio < targetAspectRatio) {
+				float excedingRatioW = Math.Abs(targetAspectRatio - sourceAspectRatio) * sourceAspectRatio;
+				float excedingRatioWHalf = excedingRatioW / 2;
+
+				top = excedingRatioWHalf;
+				bottom = 1 - excedingRatioWHalf;
+			}
+
+			var uv0 = new Vector2(left, top);
+			var uv1 = new Vector2(right, bottom);
+			return (uv0, uv1);
+		}
 		private static Vector2 ScaleImage(TextureWrap image) {
 			var ratioX = ThumbSize2D.X / image.Width;
 			var ratioY = ThumbSize2D.Y / image.Height;
