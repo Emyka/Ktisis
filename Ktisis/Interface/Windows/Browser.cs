@@ -468,17 +468,21 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				}
 			} else {
 
-				// Try finding related images close to the pose file
-				// TODO: improve algo for better relevance
-				var dir = System.IO.Path.GetDirectoryName(this.Path);
-				if (dir != null) {
-					var imageFile = new DirectoryInfo(dir)
-						.EnumerateFiles("*", SearchOption.TopDirectoryOnly)
-						.FirstOrDefault(file => BrowserWindow.ImagesExts.IsMatch(file.Extension));
-					if (imageFile != null)
-						this.ImagePath = imageFile.FullName;
-				}
+				var imageFile = this.FindExtraImages().FirstOrDefault();
+				if (imageFile != null)
+					this.ImagePath = imageFile.FullName;
 			}
+		}
+		public IEnumerable<FileInfo> FindExtraImages() {
+
+			// Try finding related images close to the pose file
+			// TODO: improve algo for better relevance
+			var dir = System.IO.Path.GetDirectoryName(this.Path);
+			if (dir == null) return new List<FileInfo>();
+
+			return new DirectoryInfo(dir)
+				.EnumerateFiles("*", SearchOption.TopDirectoryOnly)
+				.Where(file => BrowserWindow.ImagesExts.IsMatch(file.Extension));
 		}
 		public void LoadImage() {
 			if (this.ImagePath == null) return;
