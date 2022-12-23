@@ -214,7 +214,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				}
 
 				ImGui.Image(OpenedImageModal.Image.ImGuiHandle, ImageModalSize);
-				if (ImGui.Button("Close")) {
+				if (ImGui.Button("Close") || (!ImGui.IsWindowHovered(ImGuiHoveredFlags.RootAndChildWindows) && (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseClicked(ImGuiMouseButton.Right)))) {
 					ImageModalSize = default;
 					OpenedImageModal = null;
 					ImGui.CloseCurrentPopup();
