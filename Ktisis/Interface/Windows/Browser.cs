@@ -117,7 +117,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 						(var uv0, var uv1) = CropRatioImage(file.Image!);
 						ImGui.ImageButton(file.Image!.ImGuiHandle, ThumbSize2D, uv0, uv1);
 					} else
-						ImGui.ImageButton(file.Image!.ImGuiHandle, ScaleImage(file.Image));
+						ImGui.ImageButton(file.Image!.ImGuiHandle, ScaleThumbImage(file.Image));
 					ImGui.PopStyleVar();
 					ImGui.PopStyleColor();
 				} else {
@@ -205,7 +205,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Always, new Vector2(0.5f));
 			if (ImGui.BeginPopup($"##PoseBrowser##ImageDisplay##1", ImGuiWindowFlags.Modal | ImGuiWindowFlags.Popup | ImGuiWindowFlags.AlwaysAutoResize)) {
 
-				if (ImageModalSize == default) ImageModalSize = new Vector2(OpenedImageModal.Image.Width, OpenedImageModal.Image.Height);
+				if (ImageModalSize == default) ImageModalSize = ScaleImageIfBigger(OpenedImageModal.Image, ImGui.GetIO().DisplaySize * 0.75f);
 				var mouseWheel = ImGui.GetIO().MouseWheel;
 
 				if (ImGui.IsWindowHovered() && mouseWheel != 0 && ImGui.GetIO().KeyCtrl) {
@@ -397,15 +397,31 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			var uv1 = new Vector2(right, bottom);
 			return (uv0, uv1);
 		}
-		private static Vector2 ScaleImage(TextureWrap image) {
-			var ratioX = ThumbSize2D.X / image.Width;
-			var ratioY = ThumbSize2D.Y / image.Height;
-			var ratio = (float)Math.Min((double)ratioX, (double)ratioY);
+		private static Vector2 ScaleThumbImage(TextureWrap image) =>
+			ScaleImage(image, ThumbSize2D, true, false);
+		private static Vector2 ScaleImage(TextureWrap image, Vector2 targetSize, bool resizeWidth = true, bool resizeHeight = true) {
+			var ratioX = targetSize.X / image.Width;
+			var ratioY = targetSize.Y / image.Height;
+			float ratio = default;
+			if (resizeWidth && resizeHeight)
+				ratio = (float)Math.Min((double)ratioX, (double)ratioY);
+			else if (resizeWidth && !resizeHeight)
+				ratio = ratioY;
+			else if (!resizeWidth && resizeHeight)
+				ratio = ratioX;
+			else
+				return new(image.Width, image.Height);
 
 			return new(
-				image.Width * ratioY,
-				image.Height * ratioY
+				image.Width * ratio,
+				image.Height * ratio
 			);
+		}
+		private static Vector2 ScaleImageIfBigger(TextureWrap image, Vector2 maxSize) {
+			if (image.Width > maxSize.X || image.Height > maxSize.Y)
+				return ScaleImage(image, maxSize);
+			else
+				return new Vector2(image.Width, image.Height);
 		}
 	}
 	internal class BrowserPoseFile {
