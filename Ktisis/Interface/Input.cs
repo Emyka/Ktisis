@@ -1,7 +1,7 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 
 using ImGuizmoNET;
 
@@ -11,11 +11,12 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 
 using Ktisis.Events;
 using Ktisis.Overlay;
-using Ktisis.Interop.Hooks;
 using Ktisis.Structs.Bones;
 using Ktisis.Structs.Input;
 using Ktisis.Interface.Components;
 using Ktisis.Interface.Windows.PoseBrowser;
+using Ktisis.Scene;
+using Ktisis.Interop.Hooks;
 
 namespace Ktisis.Interface {
 	public static class Input {
@@ -112,6 +113,13 @@ namespace Ktisis.Interface {
 						if(!BrowserWindow.PressPreview())
 							res = false;
 						break;
+					case Purpose.CameraForward:
+					case Purpose.CameraBackward:
+					case Purpose.CameraLeft:
+					case Purpose.CameraRight:
+					case Purpose.CameraUp:
+						res = WorkCamera.Active;
+						break;
 				}
 
 				return res;
@@ -165,14 +173,14 @@ namespace Ktisis.Interface {
 			return null;
 		}
 
-		internal static bool IsPurposeUsed(Purpose purpose, VirtualKey input) {
+		internal static bool IsPurposeUsed(Purpose purpose, VirtualKey input = VirtualKey.NO_KEY) {
 			var keys = PurposeToVirtualKeys(purpose);
 
 			var match = keys.Count > 0;
 			foreach (var key in keys) {
 				if (!Services.KeyState.IsVirtualKeyValid(key))
 					return false;
-				match &= key == input || ControlHooks.KeyboardState.IsKeyDown(key);
+				match &= key == input || EventManager.IsKeyDown(key);
 			}
 
 			return match;
@@ -196,6 +204,11 @@ namespace Ktisis.Interface {
 			BoneSelectionUp,
 			BoneSelectionDown,
 			BrowserHoldPreview,
+			CameraForward,
+			CameraBackward,
+			CameraRight,
+			CameraLeft,
+			CameraUp,
 		}
 
 		public static readonly Dictionary<Purpose, List<VirtualKey>> DefaultKeys = new(){
@@ -213,6 +226,11 @@ namespace Ktisis.Interface {
 			{Purpose.BoneSelectionUp, new(){VirtualKey.UP}},
 			{Purpose.BoneSelectionDown, new(){VirtualKey.DOWN}},
 			{Purpose.BrowserHoldPreview, new(){VirtualKey.NO_KEY}},
+			{Purpose.CameraForward, new(){VirtualKey.W}},
+			{Purpose.CameraBackward, new(){VirtualKey.S}},
+			{Purpose.CameraRight, new(){VirtualKey.D}},
+			{Purpose.CameraLeft, new(){VirtualKey.A}},
+			{Purpose.CameraUp, new(){VirtualKey.SPACE}},
 		};
 
 		// Init & dispose
