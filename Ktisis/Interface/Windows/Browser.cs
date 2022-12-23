@@ -36,10 +36,12 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		private static List<BrowserPoseFile> BrowserPoseFiles = new();
 		private static BrowserPoseFile? FileInFocus = null;
 		private static BrowserPoseFile? FileInPreview = null;
+		private static BrowserPoseFile? OpenedImageModal = null;
 		private static PoseContainer _TempPose = new();
 		private static bool IsHolding = false;
 		private static string Search = "";
 		private static Regex ShortPath = new(@"^$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+		private static Vector2 ImageModalSize = default;
 
 
 		// Toggle visibility
@@ -72,6 +74,9 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 					ClearImageCache();
 				return;
 			}
+
+			DrawImageModal();
+
 			if (!BrowserPoseFiles.Any()) Sync();
 
 			var files = BrowserPoseFiles;
@@ -166,6 +171,8 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 					ImGui.EndPopup();
 				}
+				if (hasImage && ImGui.IsItemClicked(ImGuiMouseButton.Left))
+					OpenedImageModal = file;
 
 				// TODO: display discreet name in the image instead of tooltip
 
@@ -191,7 +198,31 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			ImGui.End();
 		}
 
+		private static void DrawImageModal() {
+			if (OpenedImageModal == null) return;
+			if (OpenedImageModal.Image == null) return;
 
+			ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Always, new Vector2(0.5f));
+			if (ImGui.BeginPopup($"##PoseBrowser##ImageDisplay##1", ImGuiWindowFlags.Modal | ImGuiWindowFlags.Popup | ImGuiWindowFlags.AlwaysAutoResize)) {
+
+				if (ImageModalSize == default) ImageModalSize = new Vector2(OpenedImageModal.Image.Width, OpenedImageModal.Image.Height);
+				var mouseWheel = ImGui.GetIO().MouseWheel;
+
+				if (ImGui.IsWindowHovered() && mouseWheel != 0 && ImGui.GetIO().KeyCtrl) {
+					var resizeMult = mouseWheel > 0 ? 1.1f : 0.9f;
+					ImageModalSize *= resizeMult;
+				}
+
+				ImGui.Image(OpenedImageModal.Image.ImGuiHandle, ImageModalSize);
+				if (ImGui.Button("Close")) {
+					ImageModalSize = default;
+					OpenedImageModal = null;
+					ImGui.CloseCurrentPopup();
+				}
+				ImGui.EndPopup();
+			}
+			ImGui.OpenPopup($"##PoseBrowser##ImageDisplay##1");
+		}
 		private static void DrawToolBar(int hits) {
 
 			if (GuiHelpers.IconButtonTooltip(Dalamud.Interface.FontAwesomeIcon.Sync, "Refresh poses and images", default, $"SyncButton##PoseBrowser"))
@@ -230,7 +261,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				ThumbSize2D = new(ImGui.GetFontSize() * ThumbSize);
 			GuiHelpers.Tooltip("Thumb size");
 			var mouseWheel = ImGui.GetIO().MouseWheel;
-			if (mouseWheel != 0 && ImGui.GetIO().KeyCtrl) {
+			if (ImGui.IsWindowHovered(ImGuiHoveredFlags.RootAndChildWindows | ImGuiHoveredFlags.NoPopupHierarchy) && mouseWheel != 0 && ImGui.GetIO().KeyCtrl) {
 				ThumbSize += mouseWheel * 0.5f;
 				ThumbSize2D = new(ImGui.GetFontSize() * ThumbSize);
 			}
