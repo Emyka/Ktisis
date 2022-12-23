@@ -13,6 +13,7 @@ using ImGuiScene;
 
 using Ktisis.Data.Files;
 using Ktisis.Data.Serialization;
+using Ktisis.Interface.Components;
 using Ktisis.Structs.Actor.State;
 using Ktisis.Structs.Poses;
 using Ktisis.Util;
@@ -214,11 +215,26 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				}
 
 				ImGui.Image(OpenedImageModal.Image.ImGuiHandle, ImageModalSize);
-				if (ImGui.Button("Close") || (!ImGui.IsWindowHovered(ImGuiHoveredFlags.RootAndChildWindows) && (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseClicked(ImGuiMouseButton.Right)))) {
+				var isImageClickedLeft = ImGui.IsItemClicked(ImGuiMouseButton.Left);
+				var isImageClickedRight = ImGui.IsItemClicked(ImGuiMouseButton.Right);
+
+				if (ImGui.Button("Close", new(ImGui.CalcTextSize("Close").X+ImGui.GetStyle().FramePadding.X*2, ControlButtons.ButtonSize.Y)) || (!ImGui.IsWindowHovered(ImGuiHoveredFlags.RootAndChildWindows) && (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseClicked(ImGuiMouseButton.Right)))) {
 					ImageModalSize = default;
 					OpenedImageModal = null;
 					ImGui.CloseCurrentPopup();
 				}
+
+				ImGui.SameLine();
+				if (GuiHelpers.IconButton(Dalamud.Interface.FontAwesomeIcon.ArrowLeft, ControlButtons.ButtonSize) || isImageClickedLeft)
+					PluginLog.Debug($"clicked left");
+				ImGui.SameLine();
+				if(OpenedImageModal != null) {
+					ImGui.Text($"{OpenedImageModal.Name}");
+					ImGui.SameLine();
+				}
+				if (GuiHelpers.IconButton(Dalamud.Interface.FontAwesomeIcon.ArrowRight, ControlButtons.ButtonSize) || isImageClickedRight)
+					PluginLog.Debug($"clicked right");
+
 				ImGui.EndPopup();
 			}
 			ImGui.OpenPopup($"##PoseBrowser##ImageDisplay##1");
