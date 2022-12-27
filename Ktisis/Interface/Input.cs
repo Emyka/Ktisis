@@ -183,7 +183,7 @@ namespace Ktisis.Interface {
 				match &= key == input || EventManager.IsKeyDown(key);
 			}
 
-			return match;
+			return match && !ControlHooks.KeyboardState.IsAnyOtherKeyDown(keys);
 		}
 
 
