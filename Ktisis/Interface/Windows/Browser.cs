@@ -13,6 +13,7 @@ using ImGuiScene;
 
 using Ktisis.Data.Files;
 using Ktisis.Data.Serialization;
+using Ktisis.Interface.Components;
 using Ktisis.Structs.Actor.State;
 using Ktisis.Structs.Poses;
 using Ktisis.Util;
@@ -36,7 +37,8 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		private static List<BrowserPoseFile> BrowserPoseFiles = new();
 		private static BrowserPoseFile? FileInFocus = null;
 		private static BrowserPoseFile? FileInPreview = null;
-		private static BrowserPoseFile? OpenedImageModal = null;
+		private static Dictionary<int, BrowserPoseFile> DisplayImages = new();
+		private static int SelectedImageIndex = 0;
 		private static PoseContainer _TempPose = new();
 		private static bool IsHolding = false;
 		private static string Search = "";
@@ -52,6 +54,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 		public static void ClearImageCache() {
 			PluginLog.Verbose($"Clear Pose Browser images");
+			DisposeImageModal();
 			BrowserPoseFiles.ForEach(f => f.DisposeImage());
 			BrowserPoseFiles.Clear();
 			FileInFocus = null;
@@ -117,7 +120,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 						(var uv0, var uv1) = CropRatioImage(file.Image!);
 						ImGui.ImageButton(file.Image!.ImGuiHandle, ThumbSize2D, uv0, uv1);
 					} else
-						ImGui.ImageButton(file.Image!.ImGuiHandle, ScaleImage(file.Image));
+						ImGui.ImageButton(file.Image!.ImGuiHandle, ScaleThumbImage(file.Image));
 					ImGui.PopStyleVar();
 					ImGui.PopStyleColor();
 				} else {
@@ -171,8 +174,18 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 					ImGui.EndPopup();
 				}
-				if (hasImage && ImGui.IsItemClicked(ImGuiMouseButton.Left))
-					OpenedImageModal = file;
+				if (hasImage && ImGui.IsItemClicked(ImGuiMouseButton.Left)) {
+					DisplayImages.Add(DisplayImages.Count, file);
+
+					foreach (var fileInfo in file.FindExtraImages()) {
+						if (fileInfo.FullName == file.ImagePath) continue;
+						var image = new BrowserPoseFile("", "");
+						image.ImagePath = fileInfo.FullName;
+						image.LoadImage();
+						DisplayImages.Add(DisplayImages.Count, image);
+					}
+
+				}
 
 				// TODO: display discreet name in the image instead of tooltip
 
@@ -199,29 +212,71 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		}
 
 		private static void DrawImageModal() {
-			if (OpenedImageModal == null) return;
-			if (OpenedImageModal.Image == null) return;
+			if (DisplayImages.Count == 0) return;
 
 			ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Always, new Vector2(0.5f));
 			if (ImGui.BeginPopup($"##PoseBrowser##ImageDisplay##1", ImGuiWindowFlags.Modal | ImGuiWindowFlags.Popup | ImGuiWindowFlags.AlwaysAutoResize)) {
 
-				if (ImageModalSize == default) ImageModalSize = new Vector2(OpenedImageModal.Image.Width, OpenedImageModal.Image.Height);
-				var mouseWheel = ImGui.GetIO().MouseWheel;
+				var isImageClickedLeft = false;
+				var isImageClickedRight = false;
+				var clickedOutside = !ImGui.IsWindowHovered(ImGuiHoveredFlags.RootAndChildWindows);
+				var indexExists = DisplayImages.TryGetValue(SelectedImageIndex, out var displayImage);
 
-				if (ImGui.IsWindowHovered() && mouseWheel != 0 && ImGui.GetIO().KeyCtrl) {
-					var resizeMult = mouseWheel > 0 ? 1.1f : 0.9f;
-					ImageModalSize *= resizeMult;
+				if (indexExists && displayImage != null && displayImage.Image != null && (displayImage.ImageTask == null || displayImage.ImageTask.IsCompletedSuccessfully)) {
+					if (ImageModalSize == default) ImageModalSize = ScaleImageIfBigger(displayImage.Image, ImGui.GetIO().DisplaySize * 0.75f);
+					var mouseWheel = ImGui.GetIO().MouseWheel;
+
+					if (ImGui.IsWindowHovered() && mouseWheel != 0 && ImGui.GetIO().KeyCtrl) {
+						var resizeMult = mouseWheel > 0 ? 1.1f : 0.9f;
+						ImageModalSize *= resizeMult;
+					}
+
+					ImGui.Image(displayImage.Image.ImGuiHandle, ImageModalSize);
+					isImageClickedLeft = ImGui.IsItemClicked(ImGuiMouseButton.Left);
+					isImageClickedRight = ImGui.IsItemClicked(ImGuiMouseButton.Right);
+				}
+				ImGui.AlignTextToFramePadding();
+				ImGui.TextWrapped($"{displayImage?.ImagePath ?? "Image Loading..."}");
+				ImGui.SameLine();
+
+				if(DisplayImages.Count > 1) {
+					if (GuiHelpers.IconButton(Dalamud.Interface.FontAwesomeIcon.ArrowLeft, ControlButtons.ButtonSize) || isImageClickedLeft) {
+						ImageModalSize = default;
+						SelectedImageIndex++;
+						if (SelectedImageIndex >= DisplayImages.Count)
+							SelectedImageIndex = 0;
+					}
+					ImGui.SameLine();
+
+					ImGui.Text($"{SelectedImageIndex + 1}/{DisplayImages.Count}");
+					ImGui.SameLine();
+
+					if (GuiHelpers.IconButton(Dalamud.Interface.FontAwesomeIcon.ArrowRight, ControlButtons.ButtonSize) || isImageClickedRight) {
+						ImageModalSize = default;
+						SelectedImageIndex--;
+						if (SelectedImageIndex < 0)
+							SelectedImageIndex = DisplayImages.Count - 1;
+					}
+					ImGui.SameLine();
 				}
 
-				ImGui.Image(OpenedImageModal.Image.ImGuiHandle, ImageModalSize);
-				if (ImGui.Button("Close")) {
-					ImageModalSize = default;
-					OpenedImageModal = null;
+				if (ImGui.Button("Close", new(ImGui.CalcTextSize("Close").X + ImGui.GetStyle().FramePadding.X * 2, ControlButtons.ButtonSize.Y)) || (clickedOutside && (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseClicked(ImGuiMouseButton.Right)))) {
+					DisposeImageModal();
 					ImGui.CloseCurrentPopup();
 				}
+
 				ImGui.EndPopup();
 			}
 			ImGui.OpenPopup($"##PoseBrowser##ImageDisplay##1");
+		}
+		private static void DisposeImageModal() {
+			SelectedImageIndex = 0;
+			ImageModalSize = default;
+			foreach (var image in DisplayImages)
+				if (image.Key != 0)
+					image.Value.DisposeImage();
+			DisplayImages.Clear();
+
 		}
 		private static void DrawToolBar(int hits) {
 
@@ -397,15 +452,31 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 			var uv1 = new Vector2(right, bottom);
 			return (uv0, uv1);
 		}
-		private static Vector2 ScaleImage(TextureWrap image) {
-			var ratioX = ThumbSize2D.X / image.Width;
-			var ratioY = ThumbSize2D.Y / image.Height;
-			var ratio = (float)Math.Min((double)ratioX, (double)ratioY);
+		private static Vector2 ScaleThumbImage(TextureWrap image) =>
+			ScaleImage(image, ThumbSize2D, true, false);
+		private static Vector2 ScaleImage(TextureWrap image, Vector2 targetSize, bool resizeWidth = true, bool resizeHeight = true) {
+			var ratioX = targetSize.X / image.Width;
+			var ratioY = targetSize.Y / image.Height;
+			float ratio = default;
+			if (resizeWidth && resizeHeight)
+				ratio = (float)Math.Min((double)ratioX, (double)ratioY);
+			else if (resizeWidth && !resizeHeight)
+				ratio = ratioY;
+			else if (!resizeWidth && resizeHeight)
+				ratio = ratioX;
+			else
+				return new(image.Width, image.Height);
 
 			return new(
-				image.Width * ratioY,
-				image.Height * ratioY
+				image.Width * ratio,
+				image.Height * ratio
 			);
+		}
+		private static Vector2 ScaleImageIfBigger(TextureWrap image, Vector2 maxSize) {
+			if (image.Width > maxSize.X || image.Height > maxSize.Y)
+				return ScaleImage(image, maxSize);
+			else
+				return new Vector2(image.Width, image.Height);
 		}
 	}
 	internal class BrowserPoseFile {
@@ -424,6 +495,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 
 		public bool IsImageLoadable => this.IsVisible && this.Image == null && this.ImageTask == null && this.ImagePath != null;
 		public bool IsImageUnloadable => !this.IsVisible && (this.Image != null || this.ImageTask != null);
+		public bool IsImageLoaded => this.Image != null && (this.ImageTask == null || this.ImageTask.IsCompletedSuccessfully);
 
 		public void FindImages() {
 			// Add embedded image if exists
@@ -436,17 +508,21 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 				}
 			} else {
 
-				// Try finding related images close to the pose file
-				// TODO: improve algo for better relevance
-				var dir = System.IO.Path.GetDirectoryName(this.Path);
-				if (dir != null) {
-					var imageFile = new DirectoryInfo(dir)
-						.EnumerateFiles("*", SearchOption.TopDirectoryOnly)
-						.FirstOrDefault(file => BrowserWindow.ImagesExts.IsMatch(file.Extension));
-					if (imageFile != null)
-						this.ImagePath = imageFile.FullName;
-				}
+				var imageFile = this.FindExtraImages().FirstOrDefault();
+				if (imageFile != null)
+					this.ImagePath = imageFile.FullName;
 			}
+		}
+		public IEnumerable<FileInfo> FindExtraImages() {
+
+			// Try finding related images close to the pose file
+			// TODO: improve algo for better relevance
+			var dir = System.IO.Path.GetDirectoryName(this.Path);
+			if (dir == null) return new HashSet<FileInfo>();
+
+			return new DirectoryInfo(dir)
+				.EnumerateFiles("*", SearchOption.TopDirectoryOnly)
+				.Where(file => BrowserWindow.ImagesExts.IsMatch(file.Extension));
 		}
 		public void LoadImage() {
 			if (this.ImagePath == null) return;
