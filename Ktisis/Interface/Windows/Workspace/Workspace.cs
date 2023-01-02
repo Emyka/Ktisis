@@ -373,10 +373,9 @@ namespace Ktisis.Interface.Windows.Workspace
 			if (ImGui.Button("Import##ImportExportPose")) {
 				KtisisGui.FileDialogManager.OpenFileDialog(
 					"Importing Pose",
-					"Pose Files (.pose){.pose}",
+					"All Pose Files (.pose;.cmp){.pose,.cmp},Pose Files(.pose){.pose},CMTools Pose Files(.cmp){.cmp}",
 					(success, path) => {
 						if (!success) return;
-
 						ImportPath(path[0], actor, body, face, trans);
 					},
 					1,
@@ -426,7 +425,17 @@ namespace Ktisis.Interface.Windows.Workspace
 
 		public unsafe static void ImportPath(string path, Actor* actor, bool body, bool face, PoseTransforms trans) {
 			var content = File.ReadAllText(path);
-			var pose = JsonParser.Deserialize<PoseFile>(content);
+			PoseFile? pose = null;
+
+			// Deserialize .cmp if detected
+			if (content.Contains("CMPVersion")) {
+				var cmpPose = JsonParser.Deserialize<CmToolPoseFile>(content);
+				if (cmpPose != null)
+					pose = cmpPose.Upgrade();
+			}
+
+			pose ??= JsonParser.Deserialize<PoseFile>(content);
+
 			if (pose == null) return;
 
 			if (actor->Model == null) return;
