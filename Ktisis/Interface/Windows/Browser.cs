@@ -27,7 +27,7 @@ namespace Ktisis.Interface.Windows.PoseBrowser {
 		private static bool CropImages = true;
 		internal static bool StreamImageLoading = false;
 		internal static bool UseAsync = true;
-		internal static Regex PosesExts = new(@"^\.(pose)$", RegexOptions.IgnoreCase | RegexOptions.Compiled); // TODO: Add .cmp when supported
+		internal static Regex PosesExts = new(@"^\.(pose|cmp)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 		internal static Regex ImagesExts = new(@"^\.(jpg|jpeg|png|gif)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 		// Temp variables
